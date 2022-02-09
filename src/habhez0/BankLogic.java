@@ -21,7 +21,6 @@ public class BankLogic
    }
 
 
-
    /**
     * Get the customers data from the bank.
     *
@@ -38,7 +37,7 @@ public class BankLogic
          ArrayList<String> customerDetails = customer.getKey();
          // Check if first element of customerDetails is equal to pNo
 
-         if (customerDetails.get(0).contains(pNo))
+         if (customerDetails.get(0).equals(pNo))
          {
             customerData.put(customerDetails, customer.getKey());
             customerData.put(customerDetails, customer.getValue());
@@ -56,33 +55,6 @@ public class BankLogic
    }
 
    /**
-    * Returns an integer that contains the last account number used.
-    *
-    * @return : int that contains the last account number used.
-    */
-   private int getLastAccountNumber ()
-   {
-      ArrayList<Integer> accountNumber = new ArrayList<>();
-
-      for (ArrayList<String> account : bank.values())
-      {
-         for (String accountNumberString : account)
-         {
-            accountNumber.add(Integer.parseInt(accountNumberString.split(" ")[0]));
-         }
-      }
-      int biggestNumber = 0;
-      for (Integer integer : accountNumber)
-      {
-         if (integer > biggestNumber)
-         {
-            biggestNumber = integer;
-         }
-      }
-      return biggestNumber;
-   }
-
-   /**
     * Returns an ArrayList <String> that contains a presentation of all the bank's customers as follows:
     * [8505221898 Karl Karlsson, 6911258876 Pelle Persson, 7505121231 Lotta Larsson]
     *
@@ -93,13 +65,14 @@ public class BankLogic
    {
       ArrayList<String> allCustomers = new ArrayList<>();
 
-
       // Get all keySet from bank
       for (ArrayList<String> customer : bank.keySet())
       {
-         if (allCustomers.contains(customer.get(0)))
-            continue;
-         allCustomers.add(customer.get(0) + SPACE + customer.get(1) + SPACE + customer.get(2));
+         // Check if customer is already added to allCustomers ArrayList
+         if (!allCustomers.contains(customer.get(0) + SPACE + customer.get(1) + SPACE + customer.get(2)))
+         {
+            allCustomers.add(customer.get(0) + SPACE + customer.get(1) + SPACE + customer.get(2));
+         }
       }
       ;
       return allCustomers;
@@ -144,31 +117,43 @@ public class BankLogic
     */
    public ArrayList<String> getCustomer (String pNo)
    {
-      ArrayList<String> finalList = new ArrayList<String>();
       LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
-
       if (customerData == null)
          return null;
 
       ArrayList<String> customer = customerData.keySet().iterator().next();
       ArrayList<String> accounts = customerData.values().iterator().next();
 
-      // Add customer data to finalList
-      finalList.add(customer.get(0) + " " + customer.get(1) + " " + customer.get(2));
-      // Get all accounts
-      for (String account : accounts)
+      ArrayList<String> customerAccounts = new ArrayList<>();
+      customerAccounts.add(customer.get(0) + SPACE + customer.get(1) + SPACE + customer.get(2));
+
+      //Order accounts by accountNumber from low to high
+      for (int i = 0; i < accounts.size(); i++)
       {
-         String[] accountData = account.split(" ");
-         if (accountData.length == 4)
+         for (int j = 0; j < accounts.size() - 1; j++)
          {
-            accountData[1] =
-                    NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(Double.parseDouble(accountData[1]));
-            String customerInfo =
-                    accountData[0] + SPACE + accountData[1] + SPACE + accountData[2] + SPACE + accountData[3] + " %";
-            finalList.add(customerInfo);
+            if (Integer.parseInt(accounts.get(j).split(" ")[0]) > Integer.parseInt(accounts.get(j + 1).split(" ")[0]))
+            {
+               String temp = accounts.get(j);
+               accounts.set(j, accounts.get(j + 1));
+               accounts.set(j + 1, temp);
+            }
          }
       }
-      return finalList;
+
+      for (String account : accounts)
+      {
+         if (account.split(" ").length == 5)
+            continue;
+         String[] accountData = account.split(" ");
+         accountData[1] =
+                 NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(Double.parseDouble(accountData[1]));
+         String accountType = "";
+         accountType += accountData[0] + SPACE + accountData[1] + SPACE + accountData[2] + SPACE + accountData[3] +
+                 " %";
+         customerAccounts.add(accountType);
+      }
+      return customerAccounts;
    }
 
    /**
@@ -219,6 +204,7 @@ public class BankLogic
       customer = customerData.keySet().iterator().next();
       // replace the old customerData with the new one
 
+      bank.put(customer, account);
       int accountNo = accountNumber;
       accountNumber++;
       return accountNo;
@@ -270,32 +256,24 @@ public class BankLogic
       if (customerData == null)
          return false;
 
-      // Get the account and customer info
-      ArrayList<String> customer = new ArrayList<String>();
-      ArrayList<String> accounts = new ArrayList<String>();
-
-      customer = customerData.keySet().iterator().next();
-      accounts = customerData.values().iterator().next();
-
-      // Get the account info
+      ArrayList<String> accounts = customerData.values().iterator().next();
       for (String account : accounts)
       {
-         String[] accountDetailArray = account.split(" ");
-         if (accountDetailArray[0].equals(Integer.toString(accountId)))
+         String[] accountDetails = account.split(" ");
+         if (accountDetails[0].equals(Integer.toString(accountId)))
          {
-            float balance = Float.parseFloat(accountDetailArray[1]);
-            if (balance < amount)
-               return false;
+            double balance = Double.parseDouble(accountDetails[1]);
             balance += amount;
-            accountDetailArray[1] = Float.toString(balance);
-            String accountInfo = accountDetailArray[0] + SPACE + accountDetailArray[1] + SPACE + accountDetailArray[2] +
-                    SPACE + accountDetailArray[3];
-            accounts.set(accounts.indexOf(account), accountInfo);
+            accountDetails[1] = Double.toString(balance);
+            // replace the old balanace with the new one in accounts
+            accounts.remove(account);
+            accounts.add(accountDetails[0] + SPACE + accountDetails[1] + SPACE + accountDetails[2] + SPACE + accountDetails[3]);
+            ArrayList<String> customer = customerData.keySet().iterator().next();
             bank.put(customer, accounts);
             return true;
          }
       }
-      return false;
+         return false;
    }
 
    /**
@@ -313,31 +291,26 @@ public class BankLogic
       LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
       if (customerData == null)
          return false;
-      ArrayList<String> customer = new ArrayList<String>();
-      ArrayList<String> accounts = new ArrayList<String>();
 
-      customer = customerData.keySet().iterator().next();
-      accounts = customerData.values().iterator().next();
-
+      ArrayList<String> accounts = customerData.values().iterator().next();
       for (String account : accounts)
       {
-         String[] accountDetailArray = account.split(" ");
-         if (accountDetailArray[0].equals(Integer.toString(accountId)))
+         String[] accountDetails = account.split(" ");
+         if (accountDetails[0].equals(Integer.toString(accountId)))
          {
-            float balance = Float.parseFloat(accountDetailArray[1]);
+            double balance = Double.parseDouble(accountDetails[1]);
             if (balance < amount)
                return false;
             balance -= amount;
-            accountDetailArray[1] = Float.toString(balance);
-            String accountInfo = accountDetailArray[0] + SPACE + accountDetailArray[1] + SPACE + accountDetailArray[2] +
-                    SPACE + accountDetailArray[3];
-            accounts.set(accounts.indexOf(account), accountInfo);
+            accountDetails[1] = Double.toString(balance);
+            // replace the old balanace with the new one in accounts
+            accounts.remove(account);
+            accounts.add(accountDetails[0] + SPACE + accountDetails[1] + SPACE + accountDetails[2] + SPACE + accountDetails[3]);
+            ArrayList<String> customer = customerData.keySet().iterator().next();
             bank.put(customer, accounts);
-
             return true;
          }
       }
-      // If customer does not exist, return false
       return false;
    }
 

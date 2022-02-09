@@ -16,31 +16,20 @@ public class App
 
    public static void main (String[] args)
    {
-      LinkedHashMap<ArrayList<String>, ArrayList<String>> map = new LinkedHashMap<ArrayList<String>, ArrayList<String>>();
-      ArrayList<String> keys = new ArrayList<String>();
-      ArrayList<String> values = new ArrayList<String>();
+      BankLogic bank = new BankLogic();
+      bank.createCustomer("Habiballah", "Hezarehee", "1234567890");
+      bank.createSavingsAccount("1234567890");
+      if (bank.deposit("1234567890", 1001, 100))
+      {
+         System.out.println("Deposit successful");
+      }
+      System.out.println(bank.getCustomer("1234567890"));
+      if (bank.withdraw("1234567890", 1001, 100))
+      {
+         System.out.println("Withdraw successful");
+      }
+      System.out.println(bank.getCustomer("1234567890"));
 
-      keys.add("1");
-      keys.add("2");
-      keys.add("3");
-
-      values.add("One");
-      values.add("Two");
-      values.add("Three");
-
-      map.put(keys, values);
-
-      keys.clear();
-      values.clear();
-
-      map.put(keys, values);
-
-      keys.add("yek");
-      values.add("One");
-
-      map.put(keys, values);
-
-      System.out.println(map);
 
    }
 }

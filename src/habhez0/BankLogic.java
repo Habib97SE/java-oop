@@ -20,6 +20,10 @@ public class BankLogic
       Customer customer = new Customer();
    }
 
+   private String convertToSwedishCurrency (double amount)
+   {
+      return NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(amount);
+   }
 
    /**
     * Get the customers data from the bank.
@@ -48,10 +52,33 @@ public class BankLogic
       return null;
    }
 
-   private boolean putBackCustomer (Map<ArrayList<String>, ArrayList<String>> customerData)
+   private void showCustomerDetails()
    {
-      // Put back customer and replace the old one
-      return bank.put(customerData.keySet().iterator().next(), customerData.values().iterator().next()) != null;
+      for (Map.Entry<ArrayList<String>, ArrayList<String>> customer : bank.entrySet())
+      {
+         ArrayList<String> customerDetails = customer.getKey();
+         System.out.println("Customer: " + customerDetails.get(0) + SPACE + customerDetails.get(1) + SPACE +
+                 customerDetails.get(2));
+      }
+   }
+
+   private void removeDuplicateCustomer ()
+   {
+      for (Map.Entry<ArrayList<String>, ArrayList<String>> customer : bank.entrySet())
+      {
+         ArrayList<String> customerDetails = customer.getKey();
+         String pNo = customerDetails.get(0);
+         //Check if customer exists twice
+         for (Map.Entry<ArrayList<String>, ArrayList<String>> customer2 : bank.entrySet())
+         {
+            ArrayList<String> customerDetails2 = customer2.getKey();
+            if (customerDetails2.get(0).equals(pNo))
+            {
+               //Remove the duplicate customer
+               bank.remove(customerDetails2);
+            }
+         }
+      }
    }
 
    /**
@@ -63,6 +90,7 @@ public class BankLogic
     */
    public ArrayList<String> getAllCustomers ()
    {
+      //removeDuplicateCustomer();
       ArrayList<String> allCustomers = new ArrayList<>();
 
       // Get all keySet from bank
@@ -70,11 +98,10 @@ public class BankLogic
       {
          // Check if customer is already added to allCustomers ArrayList
          if (!allCustomers.contains(customer.get(0) + SPACE + customer.get(1) + SPACE + customer.get(2)))
-         {
             allCustomers.add(customer.get(0) + SPACE + customer.get(1) + SPACE + customer.get(2));
-         }
+         else
+            bank.remove(customer);
       }
-      ;
       return allCustomers;
    }
 
@@ -93,13 +120,11 @@ public class BankLogic
       {
          // If customer exists, return false
          if (Objects.equals(customer.get(0), pNo))
-         {
             return false;
-         }
       }
       // Create new customer
-      ArrayList<String> customer = new ArrayList<String>();
-      ArrayList<String> accounts = new ArrayList<String>();
+      ArrayList<String> customer = new ArrayList<>();
+      ArrayList<String> accounts = new ArrayList<>();
       customer.add(pNo);
       customer.add(name);
       customer.add(surname);
@@ -146,8 +171,7 @@ public class BankLogic
          if (account.split(" ").length == 5)
             continue;
          String[] accountData = account.split(" ");
-         accountData[1] =
-                 NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(Double.parseDouble(accountData[1]));
+         accountData[1] = convertToSwedishCurrency(Double.parseDouble(accountData[1]));
          String accountType = "";
          accountType += accountData[0] + SPACE + accountData[1] + SPACE + accountData[2] + SPACE + accountData[3] +
                  " %";
@@ -167,20 +191,20 @@ public class BankLogic
     */
    public boolean changeCustomerName (String name, String surname, String pNo)
    {
+
       if (name.isEmpty() && surname.isEmpty())
          return false;
-      for (Map.Entry<ArrayList<String>, ArrayList<String>> entry : bank.entrySet())
-      {
-         if (entry.getKey().get(0).equals(pNo))
-         {
-            if (!name.equals(""))
-               entry.getKey().set(1, name);
-            if (!surname.equals(""))
-               entry.getKey().set(2, surname);
-            return true;
-         }
-      }
-      return false;
+      LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
+      if (customerData == null)
+         return false;
+      ArrayList<String> customer = customerData.keySet().iterator().next();
+      if (!name.isEmpty())
+         customer.set(1, name);
+      if (!surname.isEmpty())
+         customer.set(2, surname);
+
+
+      return true;
    }
 
    /**
@@ -200,7 +224,7 @@ public class BankLogic
 
       String accountInfo = accountNumber + " " + "0.00" + " " + "Sparkonto" + " " + "1.2";
       account.add(accountInfo);
-      ArrayList<String> customer = new ArrayList<String>();
+      ArrayList<String> customer = new ArrayList<>();
       customer = customerData.keySet().iterator().next();
       // replace the old customerData with the new one
 
@@ -230,7 +254,7 @@ public class BankLogic
          if (accountDetails[0].equals(Integer.toString(accountId)))
          {
             String accountInfo = "";
-            accountDetails[1] = NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(Double.parseDouble(accountDetails[1]));
+            accountDetails[1] = convertToSwedishCurrency(Double.parseDouble(accountDetails[1]));
             accountInfo =
                     accountDetails[0] + SPACE + accountDetails[1] + SPACE + accountDetails[2] + SPACE + accountDetails[3] + " %";
             return accountInfo;
@@ -269,11 +293,12 @@ public class BankLogic
             accounts.remove(account);
             accounts.add(accountDetails[0] + SPACE + accountDetails[1] + SPACE + accountDetails[2] + SPACE + accountDetails[3]);
             ArrayList<String> customer = customerData.keySet().iterator().next();
+
             bank.put(customer, accounts);
             return true;
          }
       }
-         return false;
+      return false;
    }
 
    /**
@@ -344,12 +369,9 @@ public class BankLogic
             float interest = balance * interestRate / 100;
             // Convert balance and interest to local currency
 
-            String balanceStr =
-                    NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(Double.parseDouble(String.valueOf(balance)));
-            String interestStr =
-                    NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(Double.parseDouble(String.valueOf(interest)));
-            String accountInfo =
-                    accountDetailArray[0] + SPACE + balance + SPACE + accountDetailArray[2] + SPACE + interestRate + SPACE + "closed";
+            String balanceStr = convertToSwedishCurrency(balance);
+            String interestStr = convertToSwedishCurrency(interest);
+            String accountInfo = accountDetailArray[0] + SPACE + balance + SPACE + accountDetailArray[2] + SPACE + interestRate + SPACE + "closed";
             accounts.set(accounts.indexOf(account), accountInfo);
             return accountDetailArray[0] + SPACE + balanceStr + SPACE + accountDetailArray[2] + SPACE + interestStr;
          }
@@ -379,17 +401,16 @@ public class BankLogic
     */
    public ArrayList<String> deleteCustomer (String pNo)
    {
-      ArrayList<String> finalList = new ArrayList<String>();
+      ArrayList<String> finalList = new ArrayList<>();
       LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
 
+      //If the customer does not exist return null
       if (customerData == null)
          return null;
 
-      ArrayList<String> customer = new ArrayList<String>();
-      ArrayList<String> accounts = new ArrayList<String>();
+      ArrayList<String> customer = customerData.keySet().iterator().next();
+      ArrayList<String> accounts = customerData.values().iterator().next();
 
-      customer = customerData.keySet().iterator().next();
-      accounts = customerData.values().iterator().next();
 
       finalList.add(customer.get(0) + SPACE + customer.get(1) + SPACE + customer.get(2));
       for (String account : accounts)
@@ -401,12 +422,15 @@ public class BankLogic
             float interestRate = Float.parseFloat(accountDetailArray[3]);
             float interest = balance * interestRate / 100;
             // Convert balance and interest to local currency
-            String balanceStr = NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(Double.parseDouble(String.valueOf(balance)));
-            String interestStr = NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(Double.parseDouble(String.valueOf(interest)));
+            String balanceStr = convertToSwedishCurrency(balance);
+            String interestStr = convertToSwedishCurrency(interest);
             finalList.add(accountDetailArray[0] + SPACE + balanceStr + SPACE + accountDetailArray[2] + SPACE + interestStr);
          }
       }
+      // Remove all values with same key in bank
       bank.remove(customer);
+
+
       return finalList;
    }
 }

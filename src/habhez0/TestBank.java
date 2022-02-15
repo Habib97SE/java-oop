@@ -2,8 +2,7 @@ package habhez0;
 
 import java.io.*;
 import java.util.ArrayList;
-
-import habhez0.BankLogic;
+import habhez0.BankLogic1;
 
 /**
  * D0018D, Lab 1: Testar att klasserna Account, Customer and BankLogic
@@ -22,7 +21,7 @@ import habhez0.BankLogic;
  */
 public class TestBank
 {
-	private BankLogic bank = new BankLogic();
+	private BankLogic1 bank = new BankLogic1();
 	private int testCounter = 1;
 
 	//-----------------------------------------------------------------------------------

@@ -9,16 +9,17 @@ public class BankLogic
    //Create Map of two ArrayList of customers. First part is customers details, second part is accounts details
    // Customers: socialSecurityNumber, firstName, lastName
    // Account: accountNumber, accountType, balance, interestRate
-   private static LinkedHashMap<ArrayList<String>, ArrayList<String>> bank = new LinkedHashMap<ArrayList<String>,
+   static LinkedHashMap<ArrayList<String>, ArrayList<String>> bank = new LinkedHashMap<ArrayList<String>,
            ArrayList<String>>();
    final char SPACE = ' ';
-   static int accountNumber = 1001;
+   private static int accountNumber = 1001;
 
    public BankLogic ()
    {
       Account account = new Account();
       Customer customer = new Customer();
    }
+
 
    private String convertToSwedishCurrency (double amount)
    {
@@ -52,34 +53,6 @@ public class BankLogic
       return null;
    }
 
-   private void showCustomerDetails()
-   {
-      for (Map.Entry<ArrayList<String>, ArrayList<String>> customer : bank.entrySet())
-      {
-         ArrayList<String> customerDetails = customer.getKey();
-         System.out.println("Customer: " + customerDetails.get(0) + SPACE + customerDetails.get(1) + SPACE +
-                 customerDetails.get(2));
-      }
-   }
-
-   private void removeDuplicateCustomer ()
-   {
-      for (Map.Entry<ArrayList<String>, ArrayList<String>> customer : bank.entrySet())
-      {
-         ArrayList<String> customerDetails = customer.getKey();
-         String pNo = customerDetails.get(0);
-         //Check if customer exists twice
-         for (Map.Entry<ArrayList<String>, ArrayList<String>> customer2 : bank.entrySet())
-         {
-            ArrayList<String> customerDetails2 = customer2.getKey();
-            if (customerDetails2.get(0).equals(pNo))
-            {
-               //Remove the duplicate customer
-               bank.remove(customerDetails2);
-            }
-         }
-      }
-   }
 
    /**
     * Returns an ArrayList <String> that contains a presentation of all the bank's customers as follows:
@@ -102,6 +75,7 @@ public class BankLogic
          else
             bank.remove(customer);
       }
+
       return allCustomers;
    }
 
@@ -120,6 +94,7 @@ public class BankLogic
       {
          // If customer exists, return false
          if (Objects.equals(customer.get(0), pNo))
+
             return false;
       }
       // Create new customer
@@ -129,6 +104,7 @@ public class BankLogic
       customer.add(name);
       customer.add(surname);
       bank.put(customer, accounts);
+
       return true;
    }
 
@@ -144,7 +120,10 @@ public class BankLogic
    {
       LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
       if (customerData == null)
+      {
+
          return null;
+      }
 
       ArrayList<String> customer = customerData.keySet().iterator().next();
       ArrayList<String> accounts = customerData.values().iterator().next();
@@ -177,6 +156,7 @@ public class BankLogic
                  " %";
          customerAccounts.add(accountType);
       }
+
       return customerAccounts;
    }
 
@@ -231,6 +211,7 @@ public class BankLogic
       bank.put(customer, account);
       int accountNo = accountNumber;
       accountNumber++;
+
       return accountNo;
    }
 
@@ -245,8 +226,10 @@ public class BankLogic
    {
       LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
       if (customerData == null)
-         return null;
+      {
 
+         return null;
+      }
       ArrayList<String> accounts = customerData.values().iterator().next();
       for (String account : accounts)
       {
@@ -257,9 +240,11 @@ public class BankLogic
             accountDetails[1] = convertToSwedishCurrency(Double.parseDouble(accountDetails[1]));
             accountInfo =
                     accountDetails[0] + SPACE + accountDetails[1] + SPACE + accountDetails[2] + SPACE + accountDetails[3] + " %";
+
             return accountInfo;
          }
       }
+
       return null;
    }
 
@@ -278,7 +263,10 @@ public class BankLogic
          return false;
       LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
       if (customerData == null)
+      {
+
          return false;
+      }
 
       ArrayList<String> accounts = customerData.values().iterator().next();
       for (String account : accounts)
@@ -294,10 +282,10 @@ public class BankLogic
             accounts.add(accountDetails[0] + SPACE + accountDetails[1] + SPACE + accountDetails[2] + SPACE + accountDetails[3]);
             ArrayList<String> customer = customerData.keySet().iterator().next();
 
-            bank.put(customer, accounts);
             return true;
          }
       }
+
       return false;
    }
 
@@ -312,10 +300,16 @@ public class BankLogic
    public boolean withdraw (String pNo, int accountId, int amount)
    {
       if (amount <= 0)
+      {
+
          return false;
+      }
       LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
       if (customerData == null)
+      {
+
          return false;
+      }
 
       ArrayList<String> accounts = customerData.values().iterator().next();
       for (String account : accounts)
@@ -325,7 +319,10 @@ public class BankLogic
          {
             double balance = Double.parseDouble(accountDetails[1]);
             if (balance < amount)
+            {
+
                return false;
+            }
             balance -= amount;
             accountDetails[1] = Double.toString(balance);
             // replace the old balanace with the new one in accounts
@@ -333,9 +330,11 @@ public class BankLogic
             accounts.add(accountDetails[0] + SPACE + accountDetails[1] + SPACE + accountDetails[2] + SPACE + accountDetails[3]);
             ArrayList<String> customer = customerData.keySet().iterator().next();
             bank.put(customer, accounts);
+
             return true;
          }
       }
+
       return false;
    }
 
@@ -353,7 +352,10 @@ public class BankLogic
    {
       LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNr);
       if (customerData == null)
+      {
+
          return null;
+      }
       ArrayList<String> customer = new ArrayList<String>();
       ArrayList<String> accounts = new ArrayList<String>();
 
@@ -388,10 +390,23 @@ public class BankLogic
    private boolean accountIsClosed (String account)
    {
       if (account.split(" ").length == 4)
+      {
+
          return true;
+      }
+
       return account.split(" ")[4].equals("closed");
    }
 
+   private boolean removeCustomer (ArrayList<String> customer)
+   {
+      if (bank.containsKey(customer))
+      {
+         bank.remove(customer);
+         return true;
+      }
+      return false;
+   }
 
    /**
     * Delete a customer and its bank accounts from the bank.
@@ -403,8 +418,6 @@ public class BankLogic
    {
       ArrayList<String> finalList = new ArrayList<>();
       LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
-
-      //If the customer does not exist return null
       if (customerData == null)
          return null;
 
@@ -427,10 +440,9 @@ public class BankLogic
             finalList.add(accountDetailArray[0] + SPACE + balanceStr + SPACE + accountDetailArray[2] + SPACE + interestStr);
          }
       }
-      // Remove all values with same key in bank
+      System.out.println(bank);
       bank.remove(customer);
-
-
+      System.out.println(bank);
       return finalList;
    }
 }

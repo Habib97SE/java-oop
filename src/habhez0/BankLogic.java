@@ -1,450 +1,341 @@
+/**
+ * BankLogic class hanterar bankens logik. T ex hanterar konton, kunder, insättningar och uttag.
+ *
+ * @email habhez-0@student.ltu.se
+ * @author habhez-0
+ * @version 1.0
+ */
 package habhez0;
+
+import habhez0.Account;
+import habhez0.Customer;
 
 import java.text.NumberFormat;
 import java.util.*;
 
-
 public class BankLogic
 {
-   //Create Map of two ArrayList of customers. First part is customers details, second part is accounts details
-   // Customers: socialSecurityNumber, firstName, lastName
-   // Account: accountNumber, accountType, balance, interestRate
-   static LinkedHashMap<ArrayList<String>, ArrayList<String>> bank = new LinkedHashMap<ArrayList<String>,
-           ArrayList<String>>();
-   final char SPACE = ' ';
-   private static int accountNumber = 1001;
+    // ArrayList som innehåller en ArrayList av String och kommer att hålla data om kundernas och kontons uppgifter.
+    // Såsom kontonummer, belopp, namn osv.
+    ArrayList<ArrayList<String>> bank = new ArrayList<ArrayList<String>>();
+    final char SPACE = ' ';
+    // accountNumber är kontonummer som plusas upp för varje gång ett nytt konto skapas.
+    private static int accountNumber = 1001;
 
-   public BankLogic ()
-   {
-      Account account = new Account();
-      Customer customer = new Customer();
-   }
+    public BankLogic ()
+    {
+        Account account = new Account();
+        Customer customer = new Customer();
+    }
 
+    /**
+     * Calculate the interest for given account and return it as a String
+     * @param accountInfo : Array of account details
+     * @return : A String of the interest for the given account
+     */
+    private String calculateInterest (String[] accountInfo)
+    {
+        double balance = Double.parseDouble(accountInfo[1]);
+        double interestRate = Double.parseDouble(accountInfo[3]);
+        return convertToSwedishCurrency(balance * interestRate / 100);
+    }
 
-   private String convertToSwedishCurrency (double amount)
-   {
-      return NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(amount);
-   }
-
-   /**
-    * Get the customers data from the bank.
-    *
-    * @param pNo : String that contains the customer's personal number
-    * @return : ArrayList<String> that contains the customer's data if the customer exists, otherwise return null.
-    */
-   private LinkedHashMap<ArrayList<String>, ArrayList<String>> getCustomerData (String pNo)
-   {
-      LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = new LinkedHashMap<ArrayList<String>,
-              ArrayList<String>>();
-      // Check if customer exists
-      for (Map.Entry<ArrayList<String>, ArrayList<String>> customer : bank.entrySet())
-      {
-         ArrayList<String> customerDetails = customer.getKey();
-         // Check if first element of customerDetails is equal to pNo
-
-         if (customerDetails.get(0).equals(pNo))
-         {
-            customerData.put(customerDetails, customer.getKey());
-            customerData.put(customerDetails, customer.getValue());
-            return customerData;
-         }
-      }
-      // If customer does not exist, return null
-      return null;
-   }
+    /**
+     * Convert double to Swedish currency format (e.g. 1 000,00 kr)
+     * @param amount : double to convert to Swedish currency
+     * @return : String with Swedish currency format
+     */
+    private String convertToSwedishCurrency (double amount)
+    {
+        return NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(amount);
+    }
 
 
-   /**
-    * Returns an ArrayList <String> that contains a presentation of all the bank's customers as follows:
-    * [8505221898 Karl Karlsson, 6911258876 Pelle Persson, 7505121231 Lotta Larsson]
-    *
-    * @return: ArrayList <String> that contains a presentation of all the bank's customers
-    * If no customers exist, return an empty ArrayList [].
-    */
-   public ArrayList<String> getAllCustomers ()
-   {
-      //removeDuplicateCustomer();
-      ArrayList<String> allCustomers = new ArrayList<>();
+    /**
+     * Return name, surname and personal number of all customers
+     * @return : ArrayList with all customers information
+     */
+    public ArrayList<String> getAllCustomers ()
+    {
+        ArrayList<String> finalList = new ArrayList<>();
+        for (ArrayList<String> customer : bank)
+        {
+            finalList.add(customer.get(0));
+        }
+        return finalList;
+    }
 
-      // Get all keySet from bank
-      for (ArrayList<String> customer : bank.keySet())
-      {
-         // Check if customer is already added to allCustomers ArrayList
-         if (!allCustomers.contains(customer.get(0) + SPACE + customer.get(1) + SPACE + customer.get(2)))
-            allCustomers.add(customer.get(0) + SPACE + customer.get(1) + SPACE + customer.get(2));
-         else
-            bank.remove(customer);
-      }
+    /**
+     * If already customer returns True, otherwise False
+     *
+     * @param pNo : Personal number of customer to search for
+     * @return : True if customer exists, otherwise False
+     */
+    private boolean isAlreadyCustomer (String pNo)
+    {
+        boolean result = false;
+        for (ArrayList<String> customer : bank)
+        {
+            String[] customerInfo = customer.get(0).split(" ");
+            if (Objects.equals(customerInfo[0], pNo))
+                return true;
+        }
+        return false;
+    }
 
-      return allCustomers;
-   }
+    /**
+     * Add new customer to bank database and return true if successful, otherwise false
+     * @param name : Name of customer to add
+     * @param surname : Surname of customer to add
+     * @param pNo : Personal number of customer to add
+     * @return : True if customer was added successfully to bank, otherwise false
+     */
+    public boolean createCustomer (String name, String surname, String pNo)
+    {
+        ArrayList<String> newCustomer = new ArrayList<>();
+        String customerInfo = pNo + SPACE + name + SPACE + surname;
+        if (!isAlreadyCustomer(pNo))
+        {
+            newCustomer.add(customerInfo);
+            bank.add(newCustomer);
+            return true;
+        }
+        return false;
+    }
 
-   /**
-    * Create a new customer
-    *
-    * @param name     : String that contains the customer's name
-    * @param surname: String that contains the customer's surname
-    * @param pNo:     String that contains the customer's personal number
-    * @return : true if the customer was created, false if the customer already exists
-    */
-   public boolean createCustomer (String name, String surname, String pNo)
-   {
-      // Check if customer already exists by pNo
-      for (ArrayList<String> customer : bank.keySet())
-      {
-         // If customer exists, return false
-         if (Objects.equals(customer.get(0), pNo))
 
+    /**
+     * Return customer's details and accounts if customer exists, otherwise return null
+     * @param pNo : Personal number of customer to search for
+     * @return : ArrayList with customer information, first element is customer details, the rest is accounts
+     */
+    public ArrayList<String> getCustomer (String pNo)
+    {
+        for (ArrayList<String> customer : bank)
+        {
+            String[] customerInfo = customer.get(0).split(" ");
+            if (Objects.equals(customerInfo[0], pNo))
+            {
+                ArrayList<String> finalList = new ArrayList<>(customer);
+                for (int i = 1; i < finalList.size(); i++)
+                {
+                    String[] account = finalList.get(i).split(" ");
+                    String accountInfo =
+                            account[0] + SPACE + convertToSwedishCurrency(Double.parseDouble(account[1])) + SPACE + account[2] + SPACE + account[3] + " %";
+                    finalList.set(i, accountInfo);
+                }
+                return finalList;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Change the customer's name and surname if customer exists, otherwise return false
+     * @param name : New name of customer to change to (if empty, name will not be changed)
+     * @param surname : New surname of customer to change to (if empty, surname will not be changed)
+     * @param pNo: Personal number of customer to search and find the customer
+     * @return :  True if customer's details were changed successfully, otherwise false
+     */
+    public boolean changeCustomerName (String name, String surname, String pNo)
+    {
+        if (name.isEmpty() && surname.isEmpty())
             return false;
-      }
-      // Create new customer
-      ArrayList<String> customer = new ArrayList<>();
-      ArrayList<String> accounts = new ArrayList<>();
-      customer.add(pNo);
-      customer.add(name);
-      customer.add(surname);
-      bank.put(customer, accounts);
-
-      return true;
-   }
-
-   /**
-    * Get all accounts, balances and interest rates for a customer
-    *
-    * @param pNo: String that contains the customer's personal number
-    * @return: ArrayList <String> that contains a presentation of all the customer's accounts as follows:
-    * [pNo firstName lastName, accountNumber balance kr accountType interestRate %]
-    * Returns null if the customer does not exist
-    */
-   public ArrayList<String> getCustomer (String pNo)
-   {
-      LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
-      if (customerData == null)
-      {
-
-         return null;
-      }
-
-      ArrayList<String> customer = customerData.keySet().iterator().next();
-      ArrayList<String> accounts = customerData.values().iterator().next();
-
-      ArrayList<String> customerAccounts = new ArrayList<>();
-      customerAccounts.add(customer.get(0) + SPACE + customer.get(1) + SPACE + customer.get(2));
-
-      //Order accounts by accountNumber from low to high
-      for (int i = 0; i < accounts.size(); i++)
-      {
-         for (int j = 0; j < accounts.size() - 1; j++)
-         {
-            if (Integer.parseInt(accounts.get(j).split(" ")[0]) > Integer.parseInt(accounts.get(j + 1).split(" ")[0]))
+        for (ArrayList<String> customer : bank)
+        {
+            String[] customerInfo = customer.get(0).split(" ");
+            if (Objects.equals(customerInfo[0], pNo))
             {
-               String temp = accounts.get(j);
-               accounts.set(j, accounts.get(j + 1));
-               accounts.set(j + 1, temp);
+                if (!name.isEmpty())
+                    customerInfo[1] = name;
+                if (!surname.isEmpty())
+                    customerInfo[2] = surname;
+                customer.set(0, customerInfo[0] + SPACE + customerInfo[1] + SPACE + customerInfo[2]);
+                return true;
             }
-         }
-      }
+        }
+        return false;
+    }
 
-      for (String account : accounts)
-      {
-         if (account.split(" ").length == 5)
-            continue;
-         String[] accountData = account.split(" ");
-         accountData[1] = convertToSwedishCurrency(Double.parseDouble(accountData[1]));
-         String accountType = "";
-         accountType += accountData[0] + SPACE + accountData[1] + SPACE + accountData[2] + SPACE + accountData[3] +
-                 " %";
-         customerAccounts.add(accountType);
-      }
-
-      return customerAccounts;
-   }
-
-   /**
-    * Change customers name, surname. If the customer does not exist, return false.
-    * If name or surname is empty, keep the old one.
-    *
-    * @param name:    String that contains the customer's new name
-    * @param surname: String that contains the customer's new surname
-    * @param pNo:     String that contains the customer's personal number
-    * @return : true if the customer's name was changed, false if the customer does not exist
-    */
-   public boolean changeCustomerName (String name, String surname, String pNo)
-   {
-
-      if (name.isEmpty() && surname.isEmpty())
-         return false;
-      LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
-      if (customerData == null)
-         return false;
-      ArrayList<String> customer = customerData.keySet().iterator().next();
-      if (!name.isEmpty())
-         customer.set(1, name);
-      if (!surname.isEmpty())
-         customer.set(2, surname);
-
-
-      return true;
-   }
-
-   /**
-    * Create a new savings account for a customer, if the customer does not exist, return -1, otherwise account number.
-    *
-    * @param pNo: String that contains the customer's personal number
-    * @return : int that contains the account number if the account was created, -1 if the customer does not exist
-    */
-   public int createSavingsAccount (String pNo)
-   {
-      Map<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
-      if (customerData == null)
-         return -1;
-      ArrayList<String> account = new ArrayList<String>();
-      // Save the value part of the customerData
-      account = customerData.values().iterator().next();
-
-      String accountInfo = accountNumber + " " + "0.00" + " " + "Sparkonto" + " " + "1.2";
-      account.add(accountInfo);
-      ArrayList<String> customer = new ArrayList<>();
-      customer = customerData.keySet().iterator().next();
-      // replace the old customerData with the new one
-
-      bank.put(customer, account);
-      int accountNo = accountNumber;
-      accountNumber++;
-
-      return accountNo;
-   }
-
-   /**
-    * Get the customer's info and return it as a string. If the customer does not exist, return null.
-    *
-    * @param pNo:       String that contains the customer's personal number
-    * @param accountId: int that contains the account number
-    * @return : String that contains the customer's info if the customer exists, null if the customer does not exist
-    */
-   public String getAccount (String pNo, int accountId)
-   {
-      LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
-      if (customerData == null)
-      {
-
-         return null;
-      }
-      ArrayList<String> accounts = customerData.values().iterator().next();
-      for (String account : accounts)
-      {
-         String[] accountDetails = account.split(" ");
-         if (accountDetails[0].equals(Integer.toString(accountId)))
-         {
-            String accountInfo = "";
-            accountDetails[1] = convertToSwedishCurrency(Double.parseDouble(accountDetails[1]));
-            accountInfo =
-                    accountDetails[0] + SPACE + accountDetails[1] + SPACE + accountDetails[2] + SPACE + accountDetails[3] + " %";
-
-            return accountInfo;
-         }
-      }
-
-      return null;
-   }
-
-
-   /**
-    * Make deposit to the account, If the customer does not exist, return false, otherwise return true.
-    *
-    * @param pNo       : String that contains the customer's personal number
-    * @param accountId : int that contains the account number
-    * @param amount    : int that contains the amount to deposit
-    * @return : boolean that contains true if the deposit was made, false if the customer does not exist
-    */
-   public boolean deposit (String pNo, int accountId, int amount)
-   {
-      if (amount <= 0)
-         return false;
-      LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
-      if (customerData == null)
-      {
-
-         return false;
-      }
-
-      ArrayList<String> accounts = customerData.values().iterator().next();
-      for (String account : accounts)
-      {
-         String[] accountDetails = account.split(" ");
-         if (accountDetails[0].equals(Integer.toString(accountId)))
-         {
-            double balance = Double.parseDouble(accountDetails[1]);
-            balance += amount;
-            accountDetails[1] = Double.toString(balance);
-            // replace the old balanace with the new one in accounts
-            accounts.remove(account);
-            accounts.add(accountDetails[0] + SPACE + accountDetails[1] + SPACE + accountDetails[2] + SPACE + accountDetails[3]);
-            ArrayList<String> customer = customerData.keySet().iterator().next();
-
-            return true;
-         }
-      }
-
-      return false;
-   }
-
-   /**
-    * Make withdrawal from the account, If the customer does not exist, return false, otherwise return true.
-    *
-    * @param pNo       : String that contains the customer's personal number
-    * @param accountId : int that contains the account number
-    * @param amount    : int that contains the amount to withdraw
-    * @return : boolean that contains true if the withdrawal was made, false if the customer does not exist
-    */
-   public boolean withdraw (String pNo, int accountId, int amount)
-   {
-      if (amount <= 0)
-      {
-
-         return false;
-      }
-      LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
-      if (customerData == null)
-      {
-
-         return false;
-      }
-
-      ArrayList<String> accounts = customerData.values().iterator().next();
-      for (String account : accounts)
-      {
-         String[] accountDetails = account.split(" ");
-         if (accountDetails[0].equals(Integer.toString(accountId)))
-         {
-            double balance = Double.parseDouble(accountDetails[1]);
-            if (balance < amount)
+    /**
+     * Create a new savings account for the customer and return its account number if successful, otherwise return -1
+     * @param pNo : Personal number of customer to search for and store the new account details in
+     * @return : Account number of new savings account if successful, otherwise -1
+     */
+    public int createSavingsAccount (String pNo)
+    {
+        for (ArrayList<String> customer : bank)
+        {
+            String[] customerInfo = customer.get(0).split(" ");
+            if (Objects.equals(customerInfo[0], pNo))
             {
-
-               return false;
+                String accountInfo = Integer.toString(accountNumber) + SPACE + "0.00" + SPACE + "Sparkonto" + SPACE + "1.2";
+                customer.add(accountInfo);
+                accountNumber++;
+                return accountNumber - 1;
             }
-            balance -= amount;
-            accountDetails[1] = Double.toString(balance);
-            // replace the old balanace with the new one in accounts
-            accounts.remove(account);
-            accounts.add(accountDetails[0] + SPACE + accountDetails[1] + SPACE + accountDetails[2] + SPACE + accountDetails[3]);
-            ArrayList<String> customer = customerData.keySet().iterator().next();
-            bank.put(customer, accounts);
+        }
+        return -1;
+    }
 
-            return true;
-         }
-      }
+    /**
+     * Find the customer via given pNo and if there is and existance account with the given account number,
+     * return the account details, otherwise return null
+     * @param pNo : Personal number of customer to search for
+     * @param accountId : Account number of account to return details of
+     * @return : ArrayList with account details if successful, otherwise null
+     */
+    public String getAccount (String pNo, int accountId)
+    {
+        String result = "";
+        for (ArrayList<String> customer : bank)
+        {
+            String[] customerInfo = customer.get(0).split(" ");
+            if (Objects.equals(customerInfo[0], pNo))
+            {
+                for (int i = 1; i < customer.size(); i++)
+                {
+                    String[] account = customer.get(i).split(" ");
+                    if (Objects.equals(account[0], Integer.toString(accountId)))
+                    {
+                        account[1] = convertToSwedishCurrency(Double.parseDouble(account[1]));
+                        return account[0] + SPACE + account[1] + SPACE + account[2] + SPACE + account[3] + " %";
+                    }
+                }
+            }
+        }
+        return null;
+    }
 
-      return false;
-   }
+    /**
+     * Make a deposit to the account with the given account number for the given customer pNo
+     *
+     * @param pNo : Personal number of customer to search for
+     * @param accountId : Account number of account to deposit to
+     * @param amount : Amount to deposit
+     * @return : True if deposit was successful, otherwise false
+     */
+    public boolean deposit (String pNo, int accountId, int amount)
+    {
+        if (amount <= 0)
+            return false;
+        for (ArrayList<String> customer : bank)
+        {
+            String[] customerInfo = customer.get(0).split(" ");
+            if (Objects.equals(customerInfo[0], pNo))
+            {
+                for (int i = 1; i < customer.size(); i++)
+                {
+                    String[] account = customer.get(i).split(" ");
+                    if (Objects.equals(account[0], Integer.toString(accountId)))
+                    {
+                        double balance = Double.parseDouble(account[1]);
+                        balance += amount;
+                        account[1] = Double.toString(balance);
+                        customer.set(i, account[0] + SPACE + account[1] + SPACE + account[2] + SPACE + account[3]);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
+    /**
+     * Make a withdrawal from the account with the given account number for the given customer pNo
+     * @param pNo : Personal number of customer to search for
+     * @param accountId : Account number of account to withdraw from
+     * @param amount  : Amount to withdraw
+     * @return : True if withdrawal was successful, otherwise false
+     */
+    public boolean withdraw (String pNo, int accountId, int amount)
+    {
+        if (amount <= 0)
+            return false;
+        for (ArrayList<String> customer : bank)
+        {
+            String[] customerInfo = customer.get(0).split(" ");
+            if (Objects.equals(customerInfo[0], pNo))
+            {
+                for (int i = 1; i < customer.size(); i++)
+                {
+                    String[] account = customer.get(i).split(" ");
+                    if (Objects.equals(account[0], Integer.toString(accountId)))
+                    {
+                        double balance = Double.parseDouble(account[1]);
+                        if (balance >= amount)
+                        {
+                            balance -= amount;
+                            account[1] = Double.toString(balance);
+                            customer.set(i, account[0] + SPACE + account[1] + SPACE + account[2] + SPACE + account[3]);
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
-   /**
-    * Close the account, If the customer does not exist, return null, otherwise return the customer's account info
-    *
-    * @param pNr       : String that contains the customer's personal number (pNr)
-    * @param accountId : int that contains the account number (accountId)
-    * @return : String that contains the account info if the account was closed, null if the customer does not exist.
-    * Calculate the interest and add it to the balance.
-    * Return string format is: "Account number Balance kr Account Type Interest rate"
-    */
-   public String closeAccount (String pNr, int accountId)
-   {
-      LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNr);
-      if (customerData == null)
-      {
+    /**
+     * Close the account with the given account number for the given customer pNo
+     * @param pNr : Personal number of customer to search for
+     * @param accountId : Account number of account to close
+     * @return : A String of accounts details and interest if successful, otherwise null
+     */
+    public String closeAccount (String pNr, int accountId)
+    {
+        for (ArrayList<String> customer : bank)
+        {
+            String[] customerInfo = customer.get(0).split(" ");
+            if (Objects.equals(customerInfo[0], pNr))
+            {
+                for (int i = 1; i < customer.size(); i++)
+                {
+                    String[] account = customer.get(i).split(" ");
+                    if (Objects.equals(account[0], Integer.toString(accountId)))
+                    {
+                        String[] accountInfo = customer.remove(i).split(" ");
 
-         return null;
-      }
-      ArrayList<String> customer = new ArrayList<String>();
-      ArrayList<String> accounts = new ArrayList<String>();
+                        String balanceStr = convertToSwedishCurrency(Double.parseDouble(accountInfo[1]));
+                        String interestStr = calculateInterest(accountInfo);
+                        return accountInfo[0] + SPACE + balanceStr + SPACE + accountInfo[2] + SPACE + interestStr;
+                    }
+                }
+            }
+        }
+        return null;
+    }
 
-      customer = customerData.keySet().iterator().next();
-      accounts = customerData.values().iterator().next();
-      for (String account : accounts)
-      {
-         String[] accountDetailArray = account.split(" ");
-         if (accountDetailArray[0].equals(Integer.toString(accountId)))
-         {
-            float balance = Float.parseFloat(accountDetailArray[1]);
-            float interestRate = Float.parseFloat(accountDetailArray[3]);
-            float interest = balance * interestRate / 100;
-            // Convert balance and interest to local currency
-
-            String balanceStr = convertToSwedishCurrency(balance);
-            String interestStr = convertToSwedishCurrency(interest);
-            String accountInfo = accountDetailArray[0] + SPACE + balance + SPACE + accountDetailArray[2] + SPACE + interestRate + SPACE + "closed";
-            accounts.set(accounts.indexOf(account), accountInfo);
-            return accountDetailArray[0] + SPACE + balanceStr + SPACE + accountDetailArray[2] + SPACE + interestStr;
-         }
-      }
-      return null;
-   }
-
-   /**
-    * If the account has been closed return true, otherwise return false
-    *
-    * @param account : String that contains the account info
-    * @return : boolean that indicates if the account has been closed or not
-    */
-   private boolean accountIsClosed (String account)
-   {
-      if (account.split(" ").length == 4)
-      {
-
-         return true;
-      }
-
-      return account.split(" ")[4].equals("closed");
-   }
-
-   private boolean removeCustomer (ArrayList<String> customer)
-   {
-      if (bank.containsKey(customer))
-      {
-         bank.remove(customer);
-         return true;
-      }
-      return false;
-   }
-
-   /**
-    * Delete a customer and its bank accounts from the bank.
-    *
-    * @param pNo : String that contains the customer's personal number
-    * @return : An arraylist of strings that contains the account info if the customer was deleted, null if the customer does not exist.
-    */
-   public ArrayList<String> deleteCustomer (String pNo)
-   {
-      ArrayList<String> finalList = new ArrayList<>();
-      LinkedHashMap<ArrayList<String>, ArrayList<String>> customerData = getCustomerData(pNo);
-      if (customerData == null)
-         return null;
-
-      ArrayList<String> customer = customerData.keySet().iterator().next();
-      ArrayList<String> accounts = customerData.values().iterator().next();
-
-
-      finalList.add(customer.get(0) + SPACE + customer.get(1) + SPACE + customer.get(2));
-      for (String account : accounts)
-      {
-         if (account.split(" ").length == 4)
-         {
-            String[] accountDetailArray = account.split(" ");
-            float balance = Float.parseFloat(accountDetailArray[1]);
-            float interestRate = Float.parseFloat(accountDetailArray[3]);
-            float interest = balance * interestRate / 100;
-            // Convert balance and interest to local currency
-            String balanceStr = convertToSwedishCurrency(balance);
-            String interestStr = convertToSwedishCurrency(interest);
-            finalList.add(accountDetailArray[0] + SPACE + balanceStr + SPACE + accountDetailArray[2] + SPACE + interestStr);
-         }
-      }
-      System.out.println(bank);
-      bank.remove(customer);
-      System.out.println(bank);
-      return finalList;
-   }
+    /**
+     * Delete a customer from the bank with all regarded accounts
+     * @param pNo : Personal number of customer to delete
+     * @return : ArrayList of all deleted accounts and customer's detail
+     */
+    public ArrayList<String> deleteCustomer (String pNo)
+    {
+        for (ArrayList<String> customer : bank)
+        {
+            String[] customerInfo = customer.get(0).split(" ");
+            if (Objects.equals(customerInfo[0], pNo))
+            {
+                ArrayList<String> accountInfo = new ArrayList<>();
+                accountInfo.add(customer.get(0));
+                for (int i = 1; i < customer.size(); i++)
+                {
+                    String[] account = customer.get(i).split(" ");
+                    if (account.length == 4)
+                    {
+                        String balanceStr = convertToSwedishCurrency(Double.parseDouble(account[1]));
+                        String interestStr = calculateInterest(account);
+                        accountInfo.add(account[0] + SPACE + balanceStr + SPACE + account[2] + SPACE + interestStr);
+                    }
+                }
+                //Delete the whole customer ArrayList from bank
+                bank.remove(customer);
+                return accountInfo;
+            }
+        }
+        return null;
+    }
 }
-
-

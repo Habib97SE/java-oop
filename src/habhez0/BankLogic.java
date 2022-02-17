@@ -2,7 +2,7 @@
  * BankLogic class hanterar bankens logik. T ex hanterar konton, kunder, insättningar och uttag.
  *
  * @email habhez-0@student.ltu.se
- * @author habhez-0
+ * @author Habiballah Hezarehee (habhez-0)
  * @version 1.0
  */
 package habhez0;
@@ -10,6 +10,7 @@ package habhez0;
 import habhez0.Account;
 import habhez0.Customer;
 
+import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.*;
 
@@ -28,6 +29,11 @@ public class BankLogic
         Customer customer = new Customer();
     }
 
+    private BigDecimal convertToBigDecimal(String amount)
+    {
+        return new BigDecimal(amount);
+    }
+
     /**
      * Calculate the interest for given account and return it as a String
      * @param accountInfo : Array of account details
@@ -35,15 +41,27 @@ public class BankLogic
      */
     private String calculateInterest (String[] accountInfo)
     {
-        double balance = Double.parseDouble(accountInfo[1]);
-        double interestRate = Double.parseDouble(accountInfo[3]);
-        return convertToSwedishCurrency(balance * interestRate / 100);
+        BigDecimal balance = convertToBigDecimal(accountInfo[1]);
+        BigDecimal interestRate = convertToBigDecimal(accountInfo[2]);
+        BigDecimal result = balance.multiply(interestRate);
+        result = result.divide(new BigDecimal(100));
+        return convertToSwedishCurrency(result);
     }
 
     /**
      * Convert double to Swedish currency format (e.g. 1 000,00 kr)
      * @param amount : double to convert to Swedish currency
      * @return : String with Swedish currency format
+     */
+    private String convertToSwedishCurrency (BigDecimal amount)
+    {
+        return NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(amount);
+    }
+
+    /**
+     * @override convertToSwedishCurrency ( )
+     * @param amount
+     * @return
      */
     private String convertToSwedishCurrency (double amount)
     {
@@ -229,9 +247,9 @@ public class BankLogic
                     String[] account = customer.get(i).split(" ");
                     if (Objects.equals(account[0], Integer.toString(accountId)))
                     {
-                        double balance = Double.parseDouble(account[1]);
-                        balance += amount;
-                        account[1] = Double.toString(balance);
+                        BigDecimal balance = new BigDecimal(account[1]);
+                        balance = balance.add(new BigDecimal(amount));
+                        account[1] = balance.toString();
                         customer.set(i, account[0] + SPACE + account[1] + SPACE + account[2] + SPACE + account[3]);
                         return true;
                     }
@@ -262,11 +280,11 @@ public class BankLogic
                     String[] account = customer.get(i).split(" ");
                     if (Objects.equals(account[0], Integer.toString(accountId)))
                     {
-                        double balance = Double.parseDouble(account[1]);
-                        if (balance >= amount)
+                        BigDecimal balance = new BigDecimal(account[1]);
+                        if (balance.compareTo(new BigDecimal(amount)) >= 0)
                         {
-                            balance -= amount;
-                            account[1] = Double.toString(balance);
+                            balance = balance.subtract(new BigDecimal(amount));
+                            account[1] = balance.toString();
                             customer.set(i, account[0] + SPACE + account[1] + SPACE + account[2] + SPACE + account[3]);
                             return true;
                         }
@@ -297,7 +315,7 @@ public class BankLogic
                     {
                         String[] accountInfo = customer.remove(i).split(" ");
 
-                        String balanceStr = convertToSwedishCurrency(Double.parseDouble(accountInfo[1]));
+                        String balanceStr = convertToSwedishCurrency(new BigDecimal(accountInfo[1]));
                         String interestStr = calculateInterest(accountInfo);
                         return accountInfo[0] + SPACE + balanceStr + SPACE + accountInfo[2] + SPACE + interestStr;
                     }

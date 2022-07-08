@@ -1,62 +1,67 @@
 /**
- * Den här klassen hanterar konton.
+ * Den här klassen innehåller metoder som hanterar konton.
  *
- * @author Habiballah Hezarehee
- * @
+ * @email habhez-0@student.ltu.se
+ * @author Habiballah Hezarehee (habhez-0)
+ * @version 1.0
  */
 package habhez0;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 public class Account
 {
-    private int balance;
-    private BigDecimal interestRate;
-    private int accountNumber;
+    private double balance;
+    private double interestRate;
+    public static int accountNumber = 1001;
     private String accountType;
+    private int customerAccountNumber;
+    private boolean accountIsActive;
 
-
-    public Account ()
-    {
-        balance = 0;
-        interestRate = new BigDecimal(0.0);
-        accountNumber = 0;
-        accountType = "savings";
-    }
-
-    public Account (int balance, BigDecimal interestRate, String accountType)
+    public Account (double balance, double interestRate, String accountType)
     {
         this.balance = balance;
         this.interestRate = interestRate;
         this.accountType = accountType;
-        //Get latest customer from BankLogic class
-
+        this.customerAccountNumber = accountNumber;
+        accountNumber++;
+        this.accountIsActive = true;
     }
 
-    public Account (int balance, BigDecimal interestRate, int accountNumber)
+    public String getAmountInLocalCurrency (double amount)
     {
-        this.balance = balance;
-        this.interestRate = interestRate;
-        this.accountNumber = accountNumber;
-        this.accountType = "savings";
+        return NumberFormat.getCurrencyInstance(new Locale("sv", "SE")).format(amount);
     }
 
-    public int getBalance ()
+    public double getBalance ()
     {
         return balance;
     }
 
-    public BigDecimal getInterestRate ()
+    public void setBalance (double balance)
+    {
+        this.balance = balance;
+    }
+
+    public double getInterestRate ()
     {
         return interestRate;
     }
 
-    public int getAccountNumber ()
+    public void setInterestRate (double interestRate)
     {
-        return accountNumber;
+        this.interestRate = interestRate;
+    }
+
+    public int getCustomerAccountNumber ()
+    {
+        return this.customerAccountNumber;
+    }
+
+    public void setCustomerAccountNumber (int accountNumber)
+    {
+        this.customerAccountNumber = accountNumber;
     }
 
     public String getAccountType ()
@@ -64,66 +69,64 @@ public class Account
         return accountType;
     }
 
-    public void setBalance (int balance)
-    {
-        this.balance = balance;
-    }
-
-    public void setInterestRate (BigDecimal interestRate)
-    {
-        this.interestRate = interestRate;
-    }
-
-    public void setAccountNumber (int accountNumber)
-    {
-        this.accountNumber = accountNumber;
-    }
-
     public void setAccountType (String accountType)
     {
         this.accountType = accountType;
     }
 
-    public boolean withdraw (int amount)
+    public boolean deposit (double amount)
     {
-        if (amount > balance)
+        if (amount > 0)
         {
-            System.out.println("Insufficient funds");
-            return false;
-        } else
-        {
-            balance -= amount;
+            this.balance += amount;
+            return true;
         }
-        return true;
+        return false;
     }
 
-    public void deposit (int amount)
+    public boolean withdraw (double amount)
     {
-        balance += amount;
+        if (amount > 0 && amount <= this.balance)
+        {
+            this.balance -= amount;
+            return true;
+        }
+        return false;
     }
 
-    public void addInterest ()
+    public double calculateInterest ()
     {
-        balance += (int) (balance * interestRate.doubleValue());
-    }
-
-    public String toString ()
-    {
-        return "Balance: " + balance + "\n" + "Interest Rate: " + interestRate + "\n" + "Account Number: " + accountNumber + "\n" + "Account Type: " + accountType;
+        return (this.balance * this.interestRate) / 100;
     }
 
     /**
-     * calculate and return Interest: balance * interestRate / 100
+     * check if an account has not been closed
      *
-     * @return
+     * @return : if account active returns true else returns false
      */
-    public BigDecimal calculateInterest ()
+    public boolean getAccountIsActive ()
     {
-        BigDecimal interest = new BigDecimal(balance);
-        interest = interest.multiply(interestRate);
-        interest = interest.divide(new BigDecimal(100));
-        return interest;
+        return this.accountIsActive;
     }
 
+    public String deactivateAccount ()
+    {
+        if (this.accountIsActive)
+        {
+            this.accountIsActive = false;
+            return toString();
+        }
+        return null;
+    }
 
+    public String getAccountDetails ()
+    {
+        return this.customerAccountNumber + " " + getAmountInLocalCurrency(this.getBalance()) + " " + this.accountType + " " + this.getInterestRate() + " %";
+    }
+
+    @Override
+    public String toString ()
+    {
+        return this.customerAccountNumber + " " + getAmountInLocalCurrency(this.getBalance()) + " " + this.accountType + " " + this.getAmountInLocalCurrency(this.calculateInterest());
+    }
 }

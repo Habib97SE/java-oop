@@ -7,9 +7,8 @@
  */
 package habhez0;
 
-import habhez0.Account;
-
 import java.util.ArrayList;
+import java.util.Objects;
 
 
 public class Customer
@@ -17,7 +16,8 @@ public class Customer
     private String firstName;
     private String lastName;
     final private String personalNumber;
-    ArrayList<Account> accounts = new ArrayList<Account>();
+    private ArrayList<SavingsAccount> savingsAccounts = new ArrayList<>();
+    private ArrayList<CreditAccount> creditAccounts = new ArrayList<>();
 
     public Customer (String personalNumber, String firstName, String lastName)
     {
@@ -28,24 +28,35 @@ public class Customer
 
     public int createNewAccount (double balance, double interestRate, String accountType)
     {
-        Account account1 = new Account(balance, interestRate, accountType);
-        accounts.add(account1);
-        return account1.getCustomerAccountNumber();
+        int accountNumber = 0;
+        if (Objects.equals(accountType, "Sparkonto"))
+        {
+            SavingsAccount savingsAccount = new SavingsAccount(balance, interestRate, accountType);
+            savingsAccounts.add(savingsAccount);
+            accountNumber = savingsAccount.getCustomerAccountNumber();
+        }
+        if (Objects.equals(accountType, "Kreditkonto"))
+        {
+            CreditAccount creditAccount = new CreditAccount(balance, interestRate, accountType, 5000, 7);
+            creditAccounts.add(creditAccount);
+            accountNumber = creditAccount.getCustomerAccountNumber();
+        }
+        return accountNumber;
     }
 
-   public ArrayList<Account> getAccounts(){
-      return this.accounts;
-   }
+    public ArrayList<String> getAccounts ()
+    {
+        ArrayList<String> accounts = new ArrayList<>();
+        for (CreditAccount creditAccount : creditAccounts)
+            accounts.add(creditAccount.toString());
+        for (SavingsAccount savingAccount : savingsAccounts)
+            accounts.add(savingAccount.toString());
+        return accounts;
+    }
 
     public ArrayList<String> getCustomerAccounts ()
     {
-        ArrayList<String> accountsStr = new ArrayList<String>();
-        for (int i = 0; i < accounts.size(); i++)
-        {
-            String account = accounts.get(i).getAccountDetails();
-            accountsStr.add(account);
-        }
-        return accountsStr;
+        return getAccounts();
     }
 
     public String getFirstName ()
@@ -73,44 +84,84 @@ public class Customer
         return personalNumber;
     }
 
-    public boolean depositIntoAccount(int accountNumber, int amount)
+    public boolean depositIntoAccount (int accountNumber, int amount)
     {
-        for (Account account : accounts)
+        for (SavingsAccount savingsAccount : savingsAccounts )
         {
-            if (account.getCustomerAccountNumber() == accountNumber)
+            if (savingsAccount.getCustomerAccountNumber() == accountNumber)
+                return savingsAccount.deposit(amount);
+        }
+        for (CreditAccount creditAccount : creditAccounts)
+        {
+            if (creditAccount.getCustomerAccountNumber() == accountNumber)
+                return creditAccount.deposit(amount);
+        }
+
+        return false;
+    }
+
+
+    public boolean withdrawFromAccount (int accountNumber, int amount)
+    {
+        for (SavingsAccount savingsAccount : savingsAccounts )
+        {
+            if (savingsAccount.getCustomerAccountNumber() == accountNumber)
             {
-                return account.deposit(amount);
+                return savingsAccount.withdraw(amount);
+            }
+        }
+        for (CreditAccount creditAccount : creditAccounts)
+        {
+            if (creditAccount.getCustomerAccountNumber() == accountNumber)
+            {
+                return creditAccount.withdraw(amount);
             }
         }
         return false;
     }
 
-
-
-    public boolean withdrawFromAccount(int accountNumber, int amount)
+    public String removeAccount (int accountNumber)
     {
-        for (Account account : accounts)
+        String result= "";
+        for (SavingsAccount savingsAccount : savingsAccounts )
         {
-            if (account.getCustomerAccountNumber() == accountNumber)
+            if (savingsAccount.getCustomerAccountNumber() == accountNumber)
             {
-                return account.withdraw(amount);
+                result = savingsAccount.toString();
+                savingsAccounts.remove(savingsAccount);
+                return result;
             }
         }
-        return false;
-    }
-
-    public String removeAccount(int accountNumber)
-    {
-        for (int i= 0; i < accounts.size(); i++)
+        for (CreditAccount creditAccount : creditAccounts)
         {
-            if (accounts.get(i).getCustomerAccountNumber() == accountNumber)
+            if (creditAccount.getCustomerAccountNumber() == accountNumber)
             {
-                String result = accounts.get(i).toString();
-                accounts.remove(i);
+                result = creditAccount.toString();
+                creditAccounts.remove(creditAccount);
                 return result;
             }
         }
         return null;
+    }
+
+    public ArrayList<SavingsAccount> getSavingsAccounts ()
+    {
+        return savingsAccounts;
+    }
+
+    public void setSavingsAccounts (ArrayList<SavingsAccount> savingsAccounts)
+    {
+        this.savingsAccounts = savingsAccounts;
+    }
+
+    public ArrayList<CreditAccount> getCreditAccounts ()
+    {
+        return creditAccounts;
+    }
+
+    public void setCreditAccounts (ArrayList<CreditAccount> creditAccounts)
+    {
+        this.creditAccounts = creditAccounts;
     }
 
     @Override

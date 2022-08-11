@@ -7,16 +7,11 @@
  */
 package habhez0;
 
-import habhez0.Account;
-import habhez0.Customer;
-
-import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.util.*;
 
 public class BankLogic
 {
-    private ArrayList<Customer> allCustomers = new ArrayList<Customer>();
+    private ArrayList<Customer> allCustomers = new ArrayList<>();
 
     /**
      * Check if customer with given pNo already exists in our system.
@@ -40,10 +35,8 @@ public class BankLogic
     {
         for (Customer customer : allCustomers)
         {
-            if (customer.getPersonalNumber() == pNo)
-            {
+            if (Objects.equals(customer.getPersonalNumber(), pNo))
                 return customer;
-            }
         }
         return null;
     }
@@ -54,9 +47,7 @@ public class BankLogic
         for (int i = 0; i < accounts.size(); i++)
         {
             if (accounts.get(i).getCustomerAccountNumber() == accountNumber)
-            {
                 return accounts.get(i);
-            }
         }
         return null;
     }
@@ -71,9 +62,8 @@ public class BankLogic
     {
         ArrayList<String> allCustomersStr = new ArrayList<String>();
         for (Customer allCustomer : allCustomers)
-        {
             allCustomersStr.add(allCustomer.toString());
-        }
+
         return allCustomersStr;
     }
 
@@ -110,11 +100,15 @@ public class BankLogic
             if (Objects.equals(allCustomer.getPersonalNumber(), pNo))
             {
                 customerDetails.add(allCustomer.toString());
-                for (Account account : allCustomer.getAccounts())
+                for (CreditAccount creditAccount : allCustomer.getCreditAccounts())
                 {
-                    if (!account.getAccountIsActive())
-                        continue;
-                    customerDetails.add(account.getAccountDetails());
+                    if (creditAccount.getAccountIsActive())
+                        customerDetails.add(creditAccount.getAccountDetails());
+                }
+                for (SavingsAccount savingsAccount : allCustomer.getSavingsAccounts())
+                {
+                    if (savingsAccount.getAccountIsActive())
+                        customerDetails.add(savingsAccount.getAccountDetails());
                 }
                 return customerDetails;
             }
@@ -162,6 +156,56 @@ public class BankLogic
         return -1;
     }
 
+    public int createCreditAccount (String pNo)
+    {
+        if (!customerExists(pNo))
+            return -1;
+        for (Customer customer : allCustomers)
+        {
+            if (Objects.equals(customer.getPersonalNumber(), pNo))
+            {
+                return customer.createNewAccount(0.0, 0.5, "Kreditkonto");
+            }
+        }
+        return -1;
+    }
+
+    public ArrayList<String> getTransactions (String pNo, int accountId)
+    {
+        ArrayList<String> finalResult = new ArrayList<>();
+        if (!customerExists(pNo))
+            return null;
+        boolean accountBelongsToCustomer = false;
+        for (Customer customer : allCustomers)
+        {
+            if (Objects.equals(customer.getPersonalNumber(), pNo))
+            {
+                for (CreditAccount creditAccount : customer.getCreditAccounts())
+                {
+                    if (creditAccount.getCustomerAccountNumber() == accountId)
+                    {
+                        finalResult = creditAccount.getTransactions();
+                        accountBelongsToCustomer = true;
+                    }
+
+                }
+                for (SavingsAccount savingsAccount : customer.getSavingsAccounts())
+                {
+                    if (savingsAccount.getCustomerAccountNumber() == accountId)
+                    {
+                        finalResult = savingsAccount.getTransactions();
+                        accountBelongsToCustomer = true;
+                    }
+                }
+            }
+        }
+        if (!accountBelongsToCustomer)
+        {
+            return null;
+        }
+        return finalResult;
+    }
+
     public String getAccount (String pNo, int accountId)
     {
         if (!customerExists(pNo))
@@ -170,10 +214,19 @@ public class BankLogic
         {
             if (Objects.equals(allCustomer.getPersonalNumber(), pNo))
             {
-                for (Account account : allCustomer.accounts)
+                for (CreditAccount creditAccount : allCustomer.getCreditAccounts())
                 {
-                    if (account.getCustomerAccountNumber() == accountId)
-                        return account.toString();
+                    if (creditAccount.getCustomerAccountNumber() == accountId)
+                    {
+                        return creditAccount.getAccountDetails();
+                    }
+                }
+                for (SavingsAccount savingsAccount : allCustomer.getSavingsAccounts())
+                {
+                    if (savingsAccount.getCustomerAccountNumber() == accountId)
+                    {
+                        return savingsAccount.getAccountDetails();
+                    }
                 }
             }
         }
@@ -215,10 +268,15 @@ public class BankLogic
         {
             if (Objects.equals(allCustomer.getPersonalNumber(), pNr))
             {
-                for (Account account : allCustomer.getAccounts())
+                for (SavingsAccount savingsAccount : allCustomer.getSavingsAccounts())
                 {
-                    if (account.getCustomerAccountNumber() == accountId)
-                        return account.deactivateAccount();
+                    if (savingsAccount.getCustomerAccountNumber() == accountId)
+                        return savingsAccount.deactivateAccount();
+                }
+                for (CreditAccount creditAccount : allCustomer.getCreditAccounts())
+                {
+                    if (creditAccount.getCustomerAccountNumber() == accountId)
+                        return creditAccount.deactivateAccount();
                 }
             }
         }
@@ -234,12 +292,21 @@ public class BankLogic
         if (customer != null)
         {
             removedCustomer.add(customer.toString());
-            ArrayList<Account> accounts = new ArrayList<>();
-            accounts = customer.getAccounts();
-            for (Account account : accounts)
+            for (Customer customer1 : allCustomers)
             {
-                if (account.getAccountIsActive())
-                    removedCustomer.add(account.toString());
+                if (Objects.equals(customer1.getPersonalNumber(), pNo))
+                {
+                    for (CreditAccount creditAccount : customer1.getCreditAccounts())
+                    {
+                        if (creditAccount.getAccountIsActive())
+                            removedCustomer.add(creditAccount.toString());
+                    }
+                    for (SavingsAccount savingsAccount : customer1.getSavingsAccounts())
+                    {
+                        if (savingsAccount.getAccountIsActive())
+                            removedCustomer.add(savingsAccount.toString());
+                    }
+                }
             }
             allCustomers.remove(customer);
         }

@@ -8,6 +8,9 @@
 package habhez0;
 
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Locale;
 
 public class Account
@@ -18,6 +21,7 @@ public class Account
     private String accountType;
     private int customerAccountNumber;
     private boolean accountIsActive;
+    private ArrayList<String> transactions = new ArrayList<>();
 
     public Account (double balance, double interestRate, String accountType)
     {
@@ -79,6 +83,7 @@ public class Account
         if (amount > 0)
         {
             this.balance += amount;
+            this.addTransaction(amount);
             return true;
         }
         return false;
@@ -93,6 +98,17 @@ public class Account
         }
         return false;
     }
+
+    public boolean addTransaction(double amount)
+    {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String strDate = sdf.format(new Date());
+        String finalResult =
+                strDate + " " + getAmountInLocalCurrency(amount) + " Saldo: " + getAmountInLocalCurrency(this.getBalance());
+        return this.transactions.add(finalResult);
+    }
+
+    public ArrayList<String> getTransactions() { return this.transactions; }
 
     public double calculateInterest ()
     {
@@ -109,6 +125,16 @@ public class Account
         return this.accountIsActive;
     }
 
+    public String getAccountDetails ()
+    {
+        String finalResult = "";
+        finalResult += this.customerAccountNumber + " ";
+        finalResult += getAmountInLocalCurrency(this.getBalance()) + " ";
+        finalResult += this.accountType + " ";
+        finalResult += this.getInterestRate() + " %";
+        return finalResult;
+    }
+
     public String deactivateAccount ()
     {
         if (this.accountIsActive)
@@ -117,11 +143,6 @@ public class Account
             return toString();
         }
         return null;
-    }
-
-    public String getAccountDetails ()
-    {
-        return this.customerAccountNumber + " " + getAmountInLocalCurrency(this.getBalance()) + " " + this.accountType + " " + this.getInterestRate() + " %";
     }
 
     @Override

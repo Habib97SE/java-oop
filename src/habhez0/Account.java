@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
-public class Account
+public abstract class Account
 {
     private double balance;
     private double interestRate;
@@ -89,15 +89,7 @@ public class Account
         return false;
     }
 
-    public boolean withdraw (double amount)
-    {
-        if (amount > 0 && amount <= this.balance)
-        {
-            this.balance -= amount;
-            return true;
-        }
-        return false;
-    }
+    public abstract boolean withdraw (double amount);
 
     public boolean addTransaction(double amount)
     {

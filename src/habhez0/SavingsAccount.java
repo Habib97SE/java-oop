@@ -21,7 +21,6 @@ public class SavingsAccount extends Account
                 withdrawLimitReached;
     }
 
-    @Override
     public boolean withdraw (double amount)
     {
         if (amount <= 0)

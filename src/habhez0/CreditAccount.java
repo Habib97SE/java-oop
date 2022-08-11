@@ -32,7 +32,6 @@ public class CreditAccount extends Account
         this.debtRate = debtRate;
     }
 
-    @Override
     public boolean withdraw(double amount)
     {
         if (amount <= 0)

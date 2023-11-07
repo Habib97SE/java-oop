@@ -127,6 +127,11 @@ public abstract class Account
         return finalResult;
     }
 
+    /**
+     * Deactivate an account if it has not been closed before and return the account details
+     * @return : if account has not been closed before returns account details else returns null
+     * The account details are returned as a string in this format: accountNumber balance accountType earnedInterest
+     */
     public String deactivateAccount ()
     {
         if (this.accountIsActive)

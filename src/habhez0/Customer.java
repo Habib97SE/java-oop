@@ -170,4 +170,12 @@ public class Customer
         return this.personalNumber + " " + this.firstName + " " + this.lastName;
     }
 
+    public ArrayList<String> getAccountsNumber() {
+        ArrayList<String> accounts = new ArrayList<>();
+        for (CreditAccount creditAccount : creditAccounts)
+            accounts.add(String.valueOf(creditAccount.getCustomerAccountNumber()));
+        for (SavingsAccount savingAccount : savingsAccounts)
+            accounts.add(String.valueOf(savingAccount.getCustomerAccountNumber()));
+        return accounts;
+    }
 }

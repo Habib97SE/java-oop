@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 public class App {
     public static void main(String[] args) {
-        GUI gui = new GUI("Bank", 500, 500);
+        GUI gui = new GUI("Bank", 600, 500);
         gui.start();
     }
 }

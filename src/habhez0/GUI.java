@@ -3,6 +3,7 @@ package habhez0;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -15,6 +16,7 @@ public class GUI {
     private boolean isUserLoggedIn = false;
     private String socialSecurityNumber;
     BankLogic bankLogic = new BankLogic();
+    private final String bankName = "Banken AB";
 
     public GUI(String title, int width, int height) {
         this.title = title;
@@ -24,7 +26,7 @@ public class GUI {
     }
 
     public void start() {
-        frame = new JFrame(title);
+        frame = new JFrame("Huvudsida" + " - " + bankName);
         frame.setSize(width, height);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         addFileMenu();
@@ -32,22 +34,18 @@ public class GUI {
         addCustomerMenu();
         addHelpMenu();
         frame.setJMenuBar(menuBar);
+        frame.setIconImage(createImageIcon().getImage());
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 
-    private void addNewMenu(String name, String[] items) {
-        JMenu menu = new JMenu(name);
-        for (String item : items) {
-            addNewMenuItem(menu, item);
+    public ImageIcon createImageIcon() {
+        String path = "/habhez0_files/icon.jpg";
+        URL imgURL = getClass().getResource(path);
+        if (imgURL != null) {
+            return new ImageIcon(imgURL);
         }
-        menuBar.add(menu);
-    }
-
-    private JMenuItem addNewMenuItem(JMenu menu, String name) {
-        JMenuItem menuItem = new JMenuItem(name);
-        menu.add(menuItem);
-        return menuItem;
+        return null;
     }
 
     public void addFileMenu() {
@@ -204,13 +202,8 @@ public class GUI {
         reset.addActionListener(e -> {
             accountNumbers.setSelectedIndex(0);
         });
-
-        windowPanel.add(closeAccountPane, BorderLayout.CENTER);
-        windowPanel.add(createSidebar(), BorderLayout.WEST);
-        windowPanel.add(createHeader(), BorderLayout.NORTH);
-        windowPanel.add(createFooter(), BorderLayout.SOUTH);
-
-        frame.setContentPane(windowPanel);
+        frame.setTitle("Stäng konto" + " - " + bankName);
+        frame.setContentPane(setWindowPanel(closeAccountPane));
         frame.revalidate();
     }
 
@@ -224,7 +217,7 @@ public class GUI {
         JPanel transactionsPane = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        gbc.gridwidth = 2;
+        gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
 
@@ -252,7 +245,7 @@ public class GUI {
                 return;
             }
 
-            ArrayList<String> transactions = account.getTransactions();
+            ArrayList<Transaction> transactions = account.getTransactions();
             if (transactions.isEmpty()) {
                 JOptionPane.showMessageDialog(frame, "Det finns inga transaktioner.");
                 return;
@@ -275,22 +268,28 @@ public class GUI {
 
             DefaultTableModel model = new DefaultTableModel(0, 4);
             model.addRow(transactionsTableHeader);
+            for (Transaction transaction : transactions) {
+                // Date time in format: YYYY-MM-DD HH:MM:SS
+                String dateTime = transaction.getDate().toString();
+                dateTime = dateTime.replace("T", " ");
+                dateTime = dateTime.substring(0, dateTime.length() - 4);
 
-            for (String transaction : transactions) {
-                String[] transactionDetails = transaction.split(" ");
+                String[] transactionDetails = {dateTime, transaction.getTransactionType(), transaction.getAmount().toString(), transaction.getNewBalance().toString()};
                 model.addRow(transactionDetails);
             }
 
             transactionsTable.setModel(model);
+            JScrollPane scrollPane = new JScrollPane(transactionsTable);
+            gbc.gridx = 0;
+            gbc.gridy = 2;
+            gbc.gridwidth = 3; // Span the width of the pane
+            gbc.fill = GridBagConstraints.BOTH; // Allow both horizontal and vertical stretching
+            transactionsPane.add(scrollPane, gbc);
 
         });
 
-        windowPanel.add(transactionsPane, BorderLayout.CENTER);
-        windowPanel.add(createSidebar(), BorderLayout.WEST);
-        windowPanel.add(createHeader(), BorderLayout.NORTH);
-        windowPanel.add(createFooter(), BorderLayout.SOUTH);
-
-        frame.setContentPane(windowPanel);
+        frame.setTitle("Transaktioner" + " - " + bankName);
+        frame.setContentPane(setWindowPanel(transactionsPane));
         frame.revalidate();
     }
 
@@ -319,21 +318,30 @@ public class GUI {
         JComboBox<String> accountNumbers = new JComboBox<>(accounts);
         withdrawPane.add(accountNumbers, gbc);
 
+
         gbc.gridx = 0;
         gbc.gridy = 1;
+        JLabel title = new JLabel("Uttag");
+        JLabel description = new JLabel("Du kan ta ut pengar från ditt konto. Kom ihåg att du inte kan ta ut mer än vad du har på kontot.");
+        withdrawPane.add(title, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        withdrawPane.add(description, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         withdrawPane.add(new JLabel("Belopp:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         JTextField amount = new JTextField(20);
         withdrawPane.add(amount, gbc);
 
         gbc.gridwidth = 1;
         gbc.gridx = 0;
-        gbc.gridy = 2;
-        JButton submit = new JButton("Spara");
+        gbc.gridy = 3;
+        JButton submit = new JButton("Ta ut");
         withdrawPane.add(submit, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         JButton reset = new JButton("Återställ");
         withdrawPane.add(reset, gbc);
 
@@ -356,20 +364,34 @@ public class GUI {
             }
 
             if (amountDouble <= 0) {
-                JOptionPane.showMessageDialog(frame, "Beloppet måste vara större än 0.");
+                JOptionPane.showMessageDialog(frame, "Beloppet måste vara större än 0.", "Fel", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            Double maximumWithdraw = account.getBalance();
+            if (amountDouble > maximumWithdraw) {
+                JOptionPane.showMessageDialog(frame, "Du kan inte ta ut mer än vad du har på kontot.", "Fel", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             boolean result = account.withdraw(amountDouble);
             if (result) {
                 Double accountBalance = account.getBalance();
-                String message = "Uttag lyckades. Kontonummer: " + accountNumberValue + "\nNytt saldo: " + accountBalance;
-                JOptionPane.showMessageDialog(frame, message);
+                String message = "Uttag lyckades.\nKontonummer: " + accountNumberValue + "\nNytt saldo: " + accountBalance;
+                JOptionPane.showMessageDialog(frame, message, "Uttag lyckades", JOptionPane.INFORMATION_MESSAGE);
                 setMainFrame();
             } else {
-                JOptionPane.showMessageDialog(frame, "Uttag misslyckades.");
+                JOptionPane.showMessageDialog(frame, "Uttag misslyckades.", "Fel", JOptionPane.ERROR_MESSAGE);
             }
         });
+
+        reset.addActionListener(e -> {
+            amount.setText("");
+        });
+
+        frame.setTitle("Uttag" + " - " + bankName);
+        frame.setContentPane(setWindowPanel(withdrawPane));
+        frame.revalidate();
 
     }
 
@@ -409,7 +431,7 @@ public class GUI {
         gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = 2;
-        JButton submit = new JButton("Spara");
+        JButton submit = new JButton("Sätt in");
         depositPane.add(submit, gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
@@ -448,12 +470,8 @@ public class GUI {
             amount.setText("");
         });
 
-        windowPanel.add(depositPane, BorderLayout.CENTER);
-        windowPanel.add(createSidebar(), BorderLayout.WEST);
-        windowPanel.add(createHeader(), BorderLayout.NORTH);
-        windowPanel.add(createFooter(), BorderLayout.SOUTH);
-
-        frame.setContentPane(windowPanel);
+        frame.setTitle("Insättning" + " - " + bankName);
+        frame.setContentPane(setWindowPanel(depositPane));
         frame.revalidate();
     }
 
@@ -497,12 +515,8 @@ public class GUI {
         gbc.gridy = 0;
         viewAccountDetailsPane.add(accountTable, gbc);
 
-        windowPanel.add(viewAccountDetailsPane, BorderLayout.CENTER);
-        windowPanel.add(createSidebar(), BorderLayout.WEST);
-        windowPanel.add(createHeader(), BorderLayout.NORTH);
-        windowPanel.add(createFooter(), BorderLayout.SOUTH);
-
-        frame.setContentPane(windowPanel);
+        frame.setTitle("Kontodetaljer" + " - " + bankName);
+        frame.setContentPane(setWindowPanel(viewAccountDetailsPane));
         frame.revalidate();
     }
 
@@ -624,13 +638,8 @@ public class GUI {
         gbc.gridwidth = 1;
         deleteCustomerPane.add(accountTable, gbc);
 
-
-        windowPanel.add(deleteCustomerPane, BorderLayout.CENTER);
-        windowPanel.add(createSidebar(), BorderLayout.WEST);
-        windowPanel.add(createHeader(), BorderLayout.NORTH);
-        windowPanel.add(createFooter(), BorderLayout.SOUTH);
-
-        frame.setContentPane(windowPanel);
+        frame.setTitle("Ta bort kund" + " - " + bankName);
+        frame.setContentPane(setWindowPanel(deleteCustomerPane));
         frame.revalidate();
     }
 
@@ -716,12 +725,8 @@ public class GUI {
             lastName.setText("");
         });
 
-        windowPanel.add(editCustomerPane, BorderLayout.CENTER);
-        windowPanel.add(createSidebar(), BorderLayout.WEST);
-        windowPanel.add(createHeader(), BorderLayout.NORTH);
-        windowPanel.add(createFooter(), BorderLayout.SOUTH);
-
-        frame.setContentPane(windowPanel);
+        frame.setTitle("Redigera kund" + " - " + bankName);
+        frame.setContentPane(setWindowPanel(editCustomerPane));
         frame.revalidate();
     }
 
@@ -793,6 +798,8 @@ public class GUI {
             boolean result = bankLogic.createCustomer(firstNameValue, lastNameValue, personalNumberValue);
             if (result) {
                 JOptionPane.showMessageDialog(frame, "Kund skapad.");
+                isUserLoggedIn = true;
+                socialSecurityNumber = personalNumberValue;
                 setMainFrame();
             } else {
                 JOptionPane.showMessageDialog(frame, "Kunde inte skapa kund.");
@@ -805,15 +812,11 @@ public class GUI {
             personalNumber.setText("");
         });
 
-        // add the new customer panel to the window panel
-        windowPanel.add(newCustomerPane, BorderLayout.CENTER);
-        windowPanel.add(createSidebar(), BorderLayout.WEST);
-        windowPanel.add(createHeader(), BorderLayout.NORTH);
-        windowPanel.add(createFooter(), BorderLayout.SOUTH);
-
         // set the window panel as the content pane
-        frame.setContentPane(windowPanel);
+        frame.setTitle("Skapa kund" + " - " + bankName);
+        frame.setContentPane(setWindowPanel(newCustomerPane));
         frame.revalidate();
+        frame.repaint();
     }
 
     private void setCustomer(JMenuItem setCustomer) {
@@ -900,13 +903,20 @@ public class GUI {
             }
         });
 
-        windowPanel.add(newAccountPane, BorderLayout.CENTER);
+
+        frame.setContentPane(setWindowPanel(newAccountPane));
+        frame.setTitle("Skapa konto" + " - " + bankName);
+        frame.revalidate();
+        frame.repaint();  // Repaint to show the changes
+    }
+
+    private JPanel setWindowPanel(JPanel centerPanel) {
+        JPanel windowPanel = new JPanel(new BorderLayout());
+        windowPanel.add(centerPanel, BorderLayout.CENTER);
         windowPanel.add(createSidebar(), BorderLayout.WEST);
         windowPanel.add(createHeader(), BorderLayout.NORTH);
         windowPanel.add(createFooter(), BorderLayout.SOUTH);
-
-        frame.setContentPane(windowPanel);
-        frame.revalidate();
+        return windowPanel;
     }
 
     private void setMainFrame() {

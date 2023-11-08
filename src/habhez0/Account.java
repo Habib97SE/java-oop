@@ -9,6 +9,7 @@ package habhez0;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
@@ -21,7 +22,7 @@ public abstract class Account
     private String accountType;
     private int customerAccountNumber;
     private boolean accountIsActive;
-    private ArrayList<String> transactions = new ArrayList<>();
+    private ArrayList<Transaction> transactions = new ArrayList<>();
 
     public Account (double balance, double interestRate, String accountType)
     {
@@ -93,14 +94,13 @@ public abstract class Account
 
     public boolean addTransaction(double amount)
     {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String strDate = sdf.format(new Date());
-        String finalResult =
-                strDate + " " + getAmountInLocalCurrency(amount) + " Saldo: " + getAmountInLocalCurrency(this.getBalance());
-        return this.transactions.add(finalResult);
+        LocalDateTime date = LocalDateTime.now();
+        Transaction transaction = new Transaction(date, amount, this.balance);
+        this.transactions.add(transaction);
+        return true;
     }
 
-    public ArrayList<String> getTransactions() { return this.transactions; }
+    public ArrayList<Transaction> getTransactions() { return this.transactions; }
 
     public double calculateInterest ()
     {

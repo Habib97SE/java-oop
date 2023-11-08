@@ -150,8 +150,8 @@ public class BankLogic {
         return -1;
     }
 
-    public ArrayList<String> getTransactions(String pNo, int accountId) {
-        ArrayList<String> finalResult = new ArrayList<>();
+    public ArrayList<Transaction> getTransactions(String pNo, int accountId) {
+        ArrayList<Transaction> finalResult = new ArrayList<>();
         if (!customerExists(pNo))
             return null;
         boolean accountBelongsToCustomer = false;

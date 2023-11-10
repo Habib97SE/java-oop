@@ -7,6 +7,11 @@
  */
 package habhez0;
 
+/**
+ * @author: Habib Hezarehee (habhez-0)
+ * @email: habhez-0@student.ltu.se
+ */
+
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;

@@ -1,14 +1,43 @@
 package habhez0;
 
+/**
+ * @author: Habib Hezarehee (habhez-0)
+ * @email: habhez-0@student.ltu.se
+ * @version: 1.0
+ * @since: 2023-11-10
+ * <h1>GUI</h1>
+ * <p>
+ * This class is responsible for creating the GUI for the application. <br />
+ * The GUI is created using Swing. <br />
+ * The GUI includes a menu bar with three menus: File, Accounts and Customer. <br />
+ * And to divide each view, this class uses BorderLayout, and the program has 4 panels for each view. <br />
+ * These panel are:
+ *     <ol>
+ *         <li>Header: This panel shows a welcome message and the customer's name if the customer is logged in.</li>
+ *         <li>Sidebar: This panel shows a list of social media links, an image and a link to the bank's website.</li>
+ *         <li>Main panel: The core functionality of each view like deposit, withdraw and etc. is inside this panel.</li>
+ *         <li>Footer: Shows the bank's address, email and phone number.</li>
+ *     </ol>
+ *     The GUI class has a BankLogic object to access the bank's logic. <br />
+ * </p>
+ */
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Objects;
 
+
 public class GUI {
-    private String title;
     private int width;
     private int height;
     private JMenuBar menuBar;
@@ -16,10 +45,10 @@ public class GUI {
     private boolean isUserLoggedIn = false;
     private String socialSecurityNumber;
     BankLogic bankLogic = new BankLogic();
+    JMenuItem setCustomerItem = new JMenuItem("Välj kund");
     private final String bankName = "Banken AB";
 
-    public GUI(String title, int width, int height) {
-        this.title = title;
+    public GUI(int width, int height) {
         this.width = width;
         this.height = height;
         menuBar = new JMenuBar();
@@ -32,13 +61,18 @@ public class GUI {
         addFileMenu();
         addAccountMenu();
         addCustomerMenu();
-        addHelpMenu();
+        ImageIcon icon = createImageIcon();
+        frame.setIconImage(icon.getImage());
         frame.setJMenuBar(menuBar);
-        frame.setIconImage(createImageIcon().getImage());
-        frame.setLocationRelativeTo(null);
+        setMainFrame();
         frame.setVisible(true);
     }
 
+    /**
+     * Load and return the ImageIcon object from the path specified.
+     *
+     * @return ImageIcon object: icon.jpg from the path specified, null if the path is invalid or the image is not found.
+     */
     public ImageIcon createImageIcon() {
         String path = "/habhez0_files/icon.jpg";
         URL imgURL = getClass().getResource(path);
@@ -48,37 +82,46 @@ public class GUI {
         return null;
     }
 
+    /**
+     * Load and return provided image from the habhez-0_files directory.
+     *
+     * @param fileName String: name of the file to load
+     * @return Image object: image from the path specified, null if the path is invalid or the image is not found.
+     */
+    public Image loadImage(String fileName) {
+        final String path = "/habhez0_files/" + fileName;
+        URL imgURL = getClass().getResource(path);
+        if (imgURL != null) {
+            return new ImageIcon(imgURL).getImage();
+        }
+        return null;
+    }
+
+    /**
+     * <p>
+     * Adds a JMenu to JMenuBar menuBar to display file menu. <br /><br />
+     * A user can use the File menu to exit the program. <br />
+     * </p>
+     */
     public void addFileMenu() {
-        // add menu items
         JMenu menu = new JMenu("Arkiv");
         JMenuItem exit = new JMenuItem("Avsluta");
-
-        // add menu items functionalities (action listeners)
         exit.addActionListener(e -> System.exit(0));
 
         menu.add(exit);
         menuBar.add(menu);
     }
 
-    public void addHelpMenu() {
-        JMenu helpMenu = new JMenu("Hjälp");
-        JMenuItem about = new JMenuItem("Om");
-        JMenuItem help = new JMenuItem("Hjälp");
 
-        about.addActionListener(e -> {
-            JOptionPane.showMessageDialog(frame, "Banken AB");
-        });
-
-        help.addActionListener(e -> {
-            JOptionPane.showMessageDialog(frame, "Hjälp");
-        });
-
-        helpMenu.add(about);
-        helpMenu.add(help);
-
-        menuBar.add(helpMenu);
-    }
-
+    /**
+     * <p>
+     * the method determine whether the accountId is a saving or credit account and return the account object based on that.
+     * </p>
+     * <br />
+     *
+     * @param accountId : the account number of the account
+     * @return : the account object if the account is found else returns null
+     */
     private Account getAccount(int accountId) {
         String accountType = bankLogic.checkAccountType(socialSecurityNumber, accountId);
         if (Objects.equals(accountType, "Sparkonto")) {
@@ -90,6 +133,21 @@ public class GUI {
         }
     }
 
+    /**
+     * Add JMenu for Accounts to the menuBar. <br /><br />
+     * <p style="line-height: 1.5;">
+     * The Accounts menu includes six menu items:
+     * <ol>
+     *    <li>Create Account: Creates a new account for the logged in customer {@link #createNewAccountView()} ()}. </li>
+     *    <li>View Account Details: View all available (active) accounts in a table. {@link #createAccountDetailsView()} ()} </li>
+     *    <li>Deposit: Deposit money to the bank account. {@link #createDepositView()}</li>
+     *    <li>Withdraw: Withdraw money from the bank account. {@link #createWithdrawView()}</li>
+     *    <li>Get Transactions: Get a list of all transactions for a bank account based in a table. {@link #createTransactionsView()}</li>
+     *    <li>Close Account: Close an account {@link #createCloseAccountView()}</li>
+     * </ol>
+     * Each menu item opens a new view.
+     * </p>
+     */
     public void addAccountMenu() {
         JMenu menu = new JMenu("Konto");
         JMenuItem createAccountItem = new JMenuItem("Skapa konto");
@@ -101,12 +159,12 @@ public class GUI {
 
         /* action listener to createSavingAccount  */
         createAccountItem.addActionListener(e -> {
-            createAccount();
+            createNewAccountView();
         });
 
         /* action listener to viewAccountDetails  */
         viewAccountDetails.addActionListener(e -> {
-            viewAccountsDetails();
+            createAccountDetailsView();
         });
 
         /* action listener to deposit  */
@@ -139,13 +197,16 @@ public class GUI {
         menuBar.add(menu);
     }
 
+    /**
+     * Creates a JPanel with a BorderLayout and adds the provided panel to the center of the BorderLayout. <br /><br />
+     * this method creates a view to manage closing account functionality. <br />
+     */
     private void createCloseAccountView() {
         if (!isUserLoggedIn) {
             JOptionPane.showMessageDialog(frame, "Du måste logga in för att stänga ett konto.");
             return;
         }
 
-        JPanel windowPanel = new JPanel(new BorderLayout());
         JPanel closeAccountPane = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
@@ -195,7 +256,7 @@ public class GUI {
                 return;
             }
             String message = "Konto stängt. \n" + result;
-            JOptionPane.showMessageDialog(frame, message);
+            JOptionPane.showMessageDialog(frame, message, "Konto stängt", JOptionPane.INFORMATION_MESSAGE);
             setMainFrame();
         });
 
@@ -207,35 +268,53 @@ public class GUI {
         frame.revalidate();
     }
 
+    /**
+     * This method creates and manage the Transaction view. <br />
+     */
     private void createTransactionsView() {
         if (!isUserLoggedIn) {
             JOptionPane.showMessageDialog(frame, "Du måste logga in för att se transaktioner.");
             return;
         }
 
-        JPanel windowPanel = new JPanel(new BorderLayout());
         JPanel transactionsPane = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        gbc.gridwidth = 3;
+        gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
+        JLabel panelTitleLabel = new JLabel("Visa transaktioner");
+        panelTitleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+        transactionsPane.add(panelTitleLabel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel descriptionLabel = new JLabel("Välj ett konto för att visa transaktioner.");
+        descriptionLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        transactionsPane.add(descriptionLabel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         transactionsPane.add(new JLabel("Kontonummer:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 0;
+        gbc.gridy = 2;
         // show customer's all accounts in a drop-down menu
         Customer customer = bankLogic.findCustomerByPersonalNumber(socialSecurityNumber);
         String[] accounts = customer.getAccountsNumber().toArray(new String[0]);
         JComboBox<String> accountNumbers = new JComboBox<>(accounts);
         transactionsPane.add(accountNumbers, gbc);
 
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        JButton submit = new JButton("Visa");
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        JButton submit = new JButton("Visa transaktioner");
         transactionsPane.add(submit, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        JButton printTransactions = new JButton("Skriv ut");
+        transactionsPane.add(printTransactions, gbc);
+
 
         submit.addActionListener(e -> {
             int accountNumberValue = Integer.parseInt(Objects.requireNonNull(accountNumbers.getSelectedItem()).toString());
@@ -267,7 +346,9 @@ public class GUI {
             String[] transactionsTableHeader = {"Datum", "Transaktionstyp", "Belopp", "Saldo"};
 
             DefaultTableModel model = new DefaultTableModel(0, 4);
-            model.addRow(transactionsTableHeader);
+
+            model.setColumnIdentifiers(transactionsTableHeader);
+
             for (Transaction transaction : transactions) {
                 // Date time in format: YYYY-MM-DD HH:MM:SS
                 String dateTime = transaction.getDate().toString();
@@ -279,13 +360,22 @@ public class GUI {
             }
 
             transactionsTable.setModel(model);
-            JScrollPane scrollPane = new JScrollPane(transactionsTable);
-            gbc.gridx = 0;
-            gbc.gridy = 2;
-            gbc.gridwidth = 3; // Span the width of the pane
-            gbc.fill = GridBagConstraints.BOTH; // Allow both horizontal and vertical stretching
-            transactionsPane.add(scrollPane, gbc);
+            SwingUtilities.invokeLater(() -> {
+                JScrollPane scrollPane = new JScrollPane(transactionsTable);
+                gbc.gridx = 0;
+                gbc.gridy = 4;
+                gbc.gridwidth = 3; // Span the width of the pane
+                gbc.fill = GridBagConstraints.BOTH; // Allow both horizontal and vertical stretching
+                transactionsPane.add(scrollPane, gbc);
 
+                transactionsPane.revalidate();
+                transactionsPane.repaint();
+            });
+
+        });
+
+        printTransactions.addActionListener(e -> {
+            JOptionPane.showMessageDialog(frame, "Funktionen är inte implementerad än.", "Fel", JOptionPane.ERROR_MESSAGE);
         });
 
         frame.setTitle("Transaktioner" + " - " + bankName);
@@ -293,57 +383,63 @@ public class GUI {
         frame.revalidate();
     }
 
+    /**
+     * This method creates and manage the withdraw view. <br />
+     * A customer needs to have at least one ACTIVE account to be able to use this functionality. <br />
+     * To use this view: The customer needs to choose the right bank account from drop-down list and add the amount to withdraw. <br />
+     * If the amount is greater than the balance of the account, the withdraw will fail. <br />
+     */
     private void createWithdrawView() {
         if (!isUserLoggedIn) {
             JOptionPane.showMessageDialog(frame, "Du måste logga in för att göra ett uttag.");
             return;
         }
 
-        JPanel windowPanel = new JPanel(new BorderLayout());
         JPanel withdrawPane = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
-
         gbc.gridx = 0;
         gbc.gridy = 0;
+        JLabel panelTitleLabel = new JLabel("Uttag");
+        panelTitleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+        withdrawPane.add(panelTitleLabel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel descriptionLabel = new JLabel("Välj ett konto för att göra ett uttag.");
+        descriptionLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        withdrawPane.add(descriptionLabel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         withdrawPane.add(new JLabel("Kontonummer:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 0;
+        gbc.gridy = 2;
         // show customer's all accounts in a drop-down menu
         Customer customer = bankLogic.findCustomerByPersonalNumber(socialSecurityNumber);
         String[] accounts = customer.getAccountsNumber().toArray(new String[0]);
         JComboBox<String> accountNumbers = new JComboBox<>(accounts);
         withdrawPane.add(accountNumbers, gbc);
 
-
         gbc.gridx = 0;
-        gbc.gridy = 1;
-        JLabel title = new JLabel("Uttag");
-        JLabel description = new JLabel("Du kan ta ut pengar från ditt konto. Kom ihåg att du inte kan ta ut mer än vad du har på kontot.");
-        withdrawPane.add(title, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        withdrawPane.add(description, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         withdrawPane.add(new JLabel("Belopp:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         JTextField amount = new JTextField(20);
         withdrawPane.add(amount, gbc);
 
         gbc.gridwidth = 1;
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         JButton submit = new JButton("Ta ut");
         withdrawPane.add(submit, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         JButton reset = new JButton("Återställ");
         withdrawPane.add(reset, gbc);
+
 
         submit.addActionListener(e -> {
             String accountNumberValue = Objects.requireNonNull(accountNumbers.getSelectedItem()).toString();
@@ -395,25 +491,41 @@ public class GUI {
 
     }
 
+    /**
+     * This method creates and manage the deposit view. <br />
+     * A customer needs to have at least one ACTIVE account to be able to use this functionality. <br />
+     * To use this view: The customer needs to choose the right bank account from drop-down list and add the amount to deposit. <br />
+     * If the amount is less than 0, the deposit will fail. <br />
+     * If the amount is greater than 0, the deposit will succeed. <br />
+     * If the amount is 0, the deposit will fail. <br />
+     */
     private void createDepositView() {
         if (!isUserLoggedIn) {
             JOptionPane.showMessageDialog(frame, "Du måste logga in för att göra en insättning.");
             return;
         }
 
-        JPanel windowPanel = new JPanel(new BorderLayout());
         JPanel depositPane = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
-
         gbc.gridx = 0;
         gbc.gridy = 0;
+        JLabel panelTitleLabel = new JLabel("Insättning");
+        panelTitleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+        depositPane.add(panelTitleLabel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel descriptionLabel = new JLabel("Välj ett konto för att göra en insättning.");
+        descriptionLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        depositPane.add(descriptionLabel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         depositPane.add(new JLabel("Kontonummer:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 0;
+        gbc.gridy = 2;
         // show customer's all accounts in a drop-down menu
         Customer customer = bankLogic.findCustomerByPersonalNumber(socialSecurityNumber);
         String[] accounts = customer.getAccountsNumber().toArray(new String[0]);
@@ -421,48 +533,54 @@ public class GUI {
         depositPane.add(accountNumbers, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         depositPane.add(new JLabel("Belopp:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         JTextField amount = new JTextField(20);
         depositPane.add(amount, gbc);
 
         gbc.gridwidth = 1;
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 4;
         JButton submit = new JButton("Sätt in");
         depositPane.add(submit, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 4;
         JButton reset = new JButton("Återställ");
         depositPane.add(reset, gbc);
+
 
         submit.addActionListener(e -> {
             String accountNumberValue = Objects.requireNonNull(accountNumbers.getSelectedItem()).toString();
             String amountValue = amount.getText();
 
             if (accountNumberValue.isEmpty() || amountValue.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "Du måste fylla i alla fält.");
+                JOptionPane.showMessageDialog(frame, "Du måste fylla i alla fält.", "Fel", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             int accountNumber = Integer.parseInt(accountNumberValue);
             double amountDouble = Double.parseDouble(amountValue);
 
+            if (amountDouble <= 0) {
+                JOptionPane.showMessageDialog(frame, "Beloppet måste vara större än 0.", "Fel", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             Account account = getAccount(accountNumber);
             if (account == null) {
-                JOptionPane.showMessageDialog(frame, "Kontot finns inte.");
+                JOptionPane.showMessageDialog(frame, "Kontot finns inte.", "Fel", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             boolean result = account.deposit(amountDouble);
             if (result) {
-                String message = "Insättning lyckades. Kontonummer: " + accountNumberValue + "\nNytt saldo: " + account.getBalance();
-                JOptionPane.showMessageDialog(frame, message);
+                String message = "Insättning lyckades.\nKontonummer: " + accountNumberValue + "\nNytt saldo: " + account.getBalance();
+                JOptionPane.showMessageDialog(frame, message, "Insättning lyckades", JOptionPane.INFORMATION_MESSAGE);
                 setMainFrame();
             } else {
-                JOptionPane.showMessageDialog(frame, "Insättning misslyckades.");
+                JOptionPane.showMessageDialog(frame, "Insättning misslyckades.", "Fel", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -475,7 +593,12 @@ public class GUI {
         frame.revalidate();
     }
 
-    private void viewAccountsDetails() {
+    /**
+     * This method creates and manage the account details view. <br />
+     * User needs to have at least one ACTIVE account to be able to use this functionality. <br />
+     * All accounts' details will be listed in a table. <br />
+     */
+    private void createAccountDetailsView() {
         if (!isUserLoggedIn) {
             JOptionPane.showMessageDialog(frame, "Du måste logga in för att se kontodetaljer.");
             return;
@@ -487,50 +610,74 @@ public class GUI {
             return;
         }
 
-        JPanel windowPanel = new JPanel(new BorderLayout());
-        JPanel viewAccountDetailsPane = new JPanel(new GridBagLayout());
+        JPanel accountDetailsPane = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridwidth = 3;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
 
-        JTable accountTable = new JTable();
-        accountTable.setPreferredScrollableViewportSize(new Dimension(500, 70));
-        accountTable.setFillsViewportHeight(true);
-
-        String[] accountTableHeader = {"Kontonummer", "Balans", "Kontotyp", "Ränta"};
-
-        DefaultTableModel model = new DefaultTableModel(0, 4);
-        model.addRow(accountTableHeader);
-
-        for (String account : customer.getAccounts()) {
-            String[] accountDetails = account.split(" ");
-            model.addRow(accountDetails);
-        }
-
-        accountTable.setModel(model);
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        viewAccountDetailsPane.add(accountTable, gbc);
+        JLabel panelTitleLabel = new JLabel("Kontodetaljer");
+        panelTitleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+        accountDetailsPane.add(panelTitleLabel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel descriptionLabel = new JLabel("Här kan ni se alla era konton som är aktiv. Tänk på att konto som är \n" + "ej aktiv visas inte. I tabellen nedan, kan ni se kontonummer, balans, kontotyp och ränta.");
+        descriptionLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        accountDetailsPane.add(descriptionLabel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        String[] accountTableHeader = {"Kontonummer", "Balans", "Kontotyp", "Ränta"};
+        DefaultTableModel model = new DefaultTableModel(0, 4);
+        model.setColumnIdentifiers(accountTableHeader);
+        JTable accountTable = new JTable(model);
+        accountTable.setPreferredScrollableViewportSize(new Dimension(500, 70));
+        accountTable.setFillsViewportHeight(true);
+        for (Account account : customer.getAccounts()) {
+            String[] accountDetails = {String.valueOf(account.getCustomerAccountNumber()), String.valueOf(account.getBalance()), account.getAccountType(), String.valueOf(account.getInterestRate())};
+            model.addRow(accountDetails);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(accountTable);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2; // Span the width of the pane
+        gbc.fill = GridBagConstraints.BOTH; // Allow both horizontal and vertical stretching
+        accountDetailsPane.add(scrollPane, gbc);
+
 
         frame.setTitle("Kontodetaljer" + " - " + bankName);
-        frame.setContentPane(setWindowPanel(viewAccountDetailsPane));
+        frame.setContentPane(setWindowPanel(accountDetailsPane));
         frame.revalidate();
     }
 
+    /**
+     * Creates a JMenu for Customer and add it to the menuBar. <br /><br />
+     * <p style="line-height: 1.5;">
+     * The Customer menu includes five menu items:
+     *     <ol>
+     *         <li>Set Customer: Set the customer to perform actions on. {@link #createSetCustomerView(JMenuItem)} (JMenuItem)}</li>
+     *         <li>Create Customer: Create a new customer. {@link #createNewCustomerView()} ()}</li>
+     *         <li>View Customer Details: View the details of the customer. {JOptionsPane()}</li>
+     *         <li>Edit Customer: Edit the details of the customer. {@link #createEditCustomerView()} ()}</li>
+     *         <li>Delete Customer: Delete the customer. {@link #createDeleteCustomerView()} ()}</li>
+     *     </ol>
+     * </p>
+     */
     private void addCustomerMenu() {
         JMenu customerMenu = new JMenu("Kund");
-        JMenuItem setCustomer;
 
-        if (isUserLoggedIn) {
-            setCustomer = new JMenuItem("Byt kund");
+        if (!isUserLoggedIn) {
+            setCustomerItem.setText("Välj kund");
         } else {
-            setCustomer = new JMenuItem("Välj kund");
+            setCustomerItem.setText("Byt kund");
+            setCustomerItem.setForeground(Color.RED);
         }
 
-        setCustomer.setForeground(Color.RED);
+        JMenuItem setCustomer = setCustomerItem;
         JMenuItem createCustomer = new JMenuItem("Skapa kund");
         JMenuItem viewCustomerDetails = new JMenuItem("Visa kunddetaljer");
         JMenuItem editCustomer = new JMenuItem("Redigera kund");
@@ -538,11 +685,11 @@ public class GUI {
 
         /* action listener to setCustomer  */
         setCustomer.addActionListener(e -> {
-            setCustomer(setCustomer);
+            createSetCustomerView(setCustomer);
         });
 
         createCustomer.addActionListener(e -> {
-            createNewCustomer();
+            createNewCustomerView();
         });
 
         viewCustomerDetails.addActionListener(e -> {
@@ -555,15 +702,16 @@ public class GUI {
                 JOptionPane.showMessageDialog(frame, "Kunden finns inte.");
                 return;
             }
-            JOptionPane.showMessageDialog(frame, customer.getFirstName() + " " + customer.getLastName() + " " + customer.getPersonalNumber());
+            String message = "Förnamn: " + customer.getFirstName() + "\nEfternamn: " + customer.getLastName() + "\nPersonnummer: " + customer.getPersonalNumber();
+            JOptionPane.showMessageDialog(frame, message, "Kunddetaljer", JOptionPane.INFORMATION_MESSAGE);
         });
 
         editCustomer.addActionListener(e -> {
-            editCustomerView();
+            createEditCustomerView();
         });
 
         deleteCustomer.addActionListener(e -> {
-            deleteCustomerView();
+            createDeleteCustomerView();
         });
 
         customerMenu.add(setCustomer);
@@ -576,7 +724,12 @@ public class GUI {
         menuBar.add(customerMenu);
     }
 
-    private void deleteCustomerView() {
+    /**
+     * This method creates and manage the delete customer view. <br />
+     * A customer needs to be logged in to be able to use this functionality. <br />
+     * To use this view: The customer needs to click on the delete button. <br />
+     */
+    private void createDeleteCustomerView() {
         if (!isUserLoggedIn) {
             JOptionPane.showMessageDialog(frame, "Du måste logga in för att ta bort en kund.");
             return;
@@ -589,8 +742,11 @@ public class GUI {
             return;
         }
 
-        // show JOptionPane to confirm deletion
-        int result = JOptionPane.showConfirmDialog(frame, "Är du säker på att du vill ta bort kunden?", "Ta bort kund", JOptionPane.YES_NO_OPTION);
+        String yesText = "Ja";
+        String noText = "Nej";
+
+        int result = JOptionPane.showOptionDialog(frame, "Är du säker på att du vill ta bort kunden?", "Ta bort kund", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, new String[]{yesText, noText}, yesText);
+
         if (result != JOptionPane.YES_OPTION) {
             return;
         }
@@ -599,7 +755,6 @@ public class GUI {
 
         System.out.println(deleteResult.toString());
 
-        JPanel windowPanel = new JPanel(new BorderLayout());
         JPanel deleteCustomerPane = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
@@ -643,7 +798,12 @@ public class GUI {
         frame.revalidate();
     }
 
-    private void editCustomerView() {
+    /**
+     * This method creates and manage the edit customer view. <br />
+     * A customer cannoot change their social security number (or personal number) after creating their account. <br />
+     * The customer can change their first name and last name. <br />
+     */
+    private void createEditCustomerView() {
         if (!isUserLoggedIn) {
             JOptionPane.showMessageDialog(frame, "Du måste logga in för att redigera en kund.");
             return;
@@ -656,7 +816,6 @@ public class GUI {
             return;
         }
 
-        JPanel windowPanel = new JPanel(new BorderLayout());
         JPanel editCustomerPane = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -710,6 +869,16 @@ public class GUI {
                 return;
             }
 
+            if (firstNameValue.length() < 2 || lastNameValue.length() < 2) {
+                JOptionPane.showMessageDialog(frame, "Förnamn och efternamn måste vara minst 2 bokstäver.");
+                return;
+            }
+
+            if (firstNameValue.matches(".*\\d.*") || lastNameValue.matches(".*\\d.*")) {
+                JOptionPane.showMessageDialog(frame, "Förnamn och efternamn får inte innehålla siffror.");
+                return;
+            }
+
 
             boolean result = bankLogic.changeCustomerName(firstNameValue, lastNameValue, socialSecurityNumber);
             if (result) {
@@ -730,54 +899,90 @@ public class GUI {
         frame.revalidate();
     }
 
-    private void createNewCustomer() {
+    /**
+     * This method creates and manage the create customer view. <br />
+     * To create a new customer in the system, we need to have the customer's first name, last name and social security number. <br />
+     * PS. The social security number is unique for each customer and cannot be changed later. <br />
+     */
+    private void createNewCustomerView() {
 
-        JPanel windowPanel = new JPanel(new BorderLayout());
         JPanel newCustomerPane = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-
-        // add 2 columns in each row
-        gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
 
-        // add first name label
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
+        JLabel panelTitleLabel = new JLabel("Skapa kund");
+        panelTitleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+        newCustomerPane.add(panelTitleLabel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel descriptionLabel = new JLabel("Fyll i alla fält för att skapa en ny kund. Tänk på att personnummer måste vara unik, antingen 10- eller 12 siffror. ");
+        descriptionLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        newCustomerPane.add(descriptionLabel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        JLabel importantMessageLabel = new JLabel("Viktigt: Personnummer går inte att ändra senare. Vänligen dubbelklicka innan du klickar dig vidare");
+        importantMessageLabel.setFont(new Font("SansSerif", Font.BOLD, 15));
+        importantMessageLabel.setForeground(Color.RED);
+        newCustomerPane.add(importantMessageLabel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         newCustomerPane.add(new JLabel("Förnamn:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 0;
-        JTextField firstName = new JTextField("", 20);
+        gbc.gridy = 3;
+        JTextField firstName = new JTextField(20);
         newCustomerPane.add(firstName, gbc);
 
-        // add last name label
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 4;
         newCustomerPane.add(new JLabel("Efternamn:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 1;
-        JTextField lastName = new JTextField();
+        gbc.gridy = 4;
+        JTextField lastName = new JTextField(20);
         newCustomerPane.add(lastName, gbc);
 
-        // add personal number label
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 5;
         newCustomerPane.add(new JLabel("Personnummer:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 2;
-        JTextField personalNumber = new JTextField();
+        gbc.gridy = 5;
+        JTextField personalNumber = new JTextField(20);
+
+        // add a focus listener to the personalNumber field
+        personalNumber.addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                personalNumber.setText("");
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                String personalNumberValue = personalNumber.getText();
+                if (personalNumberValue.length() == 10 || personalNumberValue.length() == 12) {
+                    personalNumber.setText(personalNumberValue);
+                } else {
+                    personalNumber.setText("10 eller 12 siffror");
+                }
+            }
+        });
+
         newCustomerPane.add(personalNumber, gbc);
 
-        // add submit and reset buttons
         gbc.gridwidth = 1;
         gbc.gridx = 0;
-        gbc.gridy = 3;
-        JButton submit = new JButton("Skapa kund");
-        newCustomerPane.add(submit, gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 3;
+        gbc.gridy = 6;
         JButton reset = new JButton("Återställ");
         newCustomerPane.add(reset, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 6;
+        JButton submit = new JButton("Skapa kund");
+        newCustomerPane.add(submit, gbc);
+
 
         // add action listeners to the buttons
         submit.addActionListener(e -> {
@@ -787,6 +992,16 @@ public class GUI {
 
             if (firstNameValue.isEmpty() || lastNameValue.isEmpty() || personalNumberValue.isEmpty()) {
                 JOptionPane.showMessageDialog(frame, "Du måste fylla i alla fält.");
+                return;
+            }
+
+            if (firstNameValue.length() < 2 || lastNameValue.length() < 2) {
+                JOptionPane.showMessageDialog(frame, "Förnamn och efternamn måste vara minst 2 bokstäver.");
+                return;
+            }
+
+            if (firstNameValue.matches(".*\\d.*") || lastNameValue.matches(".*\\d.*")) {
+                JOptionPane.showMessageDialog(frame, "Förnamn och efternamn får inte innehålla siffror.");
                 return;
             }
 
@@ -812,6 +1027,8 @@ public class GUI {
             personalNumber.setText("");
         });
 
+        // set padding around the panel
+        newCustomerPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         // set the window panel as the content pane
         frame.setTitle("Skapa kund" + " - " + bankName);
         frame.setContentPane(setWindowPanel(newCustomerPane));
@@ -819,7 +1036,13 @@ public class GUI {
         frame.repaint();
     }
 
-    private void setCustomer(JMenuItem setCustomer) {
+    /**
+     * This method creates and manage the set customer view. <br />
+     *
+     * @param setCustomer The JMenuItem to set the customer. and change the text to "Byt kund" if the user is logged in. <br />
+     *                    If the user is not logged in, the text will be "Välj kund". <br />
+     */
+    private void createSetCustomerView(JMenuItem setCustomer) {
         if (setCustomer.getText().equals("Byt kund")) {
             isUserLoggedIn = false;
             socialSecurityNumber = null;
@@ -843,7 +1066,12 @@ public class GUI {
     }
 
 
-    private void createAccount() {
+    /**
+     * This method creates and manage the create new account view. <br />
+     * A customer needs to be logged in to be able to use this functionality. <br />
+     * To use this view: The customer needs to choose the right account type {Saving, Credit} from drop-down list. <br />
+     */
+    private void createNewAccountView() {
         if (!isUserLoggedIn) {
             JOptionPane.showMessageDialog(frame, "Du måste logga in för att skapa ett konto.");
             return;
@@ -852,57 +1080,72 @@ public class GUI {
         final String SAVING_ACCOUNT = "Sparkonto";
         final String CREDIT_ACCOUNT = "Kreditkonto";
 
-        JPanel windowPanel = new JPanel(new BorderLayout());
         JPanel newAccountPane = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-
-        // add 2 columns in each row
-        gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
 
-        // add account type label
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
+        JLabel panelTitleLabel = new JLabel("Skapa konto");
+        panelTitleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+        newAccountPane.add(panelTitleLabel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel descriptionLabel = new JLabel("Välj ett konto för att göra en insättning.");
+        descriptionLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        newAccountPane.add(descriptionLabel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         newAccountPane.add(new JLabel("Kontotyp:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 0;
+        gbc.gridy = 2;
         String[] accountTypes = {SAVING_ACCOUNT, CREDIT_ACCOUNT};
         JComboBox<String> accountType = new JComboBox<>(accountTypes);
         newAccountPane.add(accountType, gbc);
 
-        // add buttons
         gbc.gridwidth = 1;
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         JButton submit = new JButton("Skapa konto");
         newAccountPane.add(submit, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        JButton reset = new JButton("Återställ");
+        newAccountPane.add(reset, gbc);
+
 
         submit.addActionListener(e -> {
             int accountNumber = 0;
             String accountTypeValue = Objects.requireNonNull(accountType.getSelectedItem()).toString();
             if (accountTypeValue.equals(SAVING_ACCOUNT)) {
                 accountNumber = bankLogic.createSavingsAccount(socialSecurityNumber);
-
+                String message = "Sparkonto skapat.\nKontonummer: " + accountNumber;
                 if (accountNumber != -1) {
-                    JOptionPane.showMessageDialog(frame, "Sparkonto skapat.");
+                    JOptionPane.showMessageDialog(frame, message, "Sparkonto skapat", JOptionPane.INFORMATION_MESSAGE);
                     setMainFrame();
                 } else {
-                    JOptionPane.showMessageDialog(frame, "Kunde inte skapa sparkonto.");
+                    JOptionPane.showMessageDialog(frame, "Kunde inte skapa sparkonto.", "Fel", JOptionPane.ERROR_MESSAGE);
                 }
 
             } else if (accountTypeValue.equals(CREDIT_ACCOUNT)) {
                 accountNumber = bankLogic.createCreditAccount(socialSecurityNumber);
-                JOptionPane.showMessageDialog(frame, "Kreditkonto skapat.");
                 if (accountNumber != -1) {
-                    JOptionPane.showMessageDialog(frame, "Sparkonto skapat.");
+                    String message = "Kreditkonto skapat.\nKontonummer: " + accountNumber;
+                    JOptionPane.showMessageDialog(frame, message, "Kreditkonto skapat", JOptionPane.INFORMATION_MESSAGE);
                     setMainFrame();
                 } else {
-                    JOptionPane.showMessageDialog(frame, "Kunde inte skapa sparkonto.");
+                    JOptionPane.showMessageDialog(frame, "Kunde inte skapa sparkonto.", "Fel", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
 
+        reset.addActionListener(e -> {
+            accountType.setSelectedIndex(0);
+        });
 
         frame.setContentPane(setWindowPanel(newAccountPane));
         frame.setTitle("Skapa konto" + " - " + bankName);
@@ -910,6 +1153,12 @@ public class GUI {
         frame.repaint();  // Repaint to show the changes
     }
 
+    /**
+     * This method recreate all panels and set the main frame. <br />
+     *
+     * @param centerPanel The panel to be set in the center of the main frame. <br />
+     * @return The main panel with all panels. <br />
+     */
     private JPanel setWindowPanel(JPanel centerPanel) {
         JPanel windowPanel = new JPanel(new BorderLayout());
         windowPanel.add(centerPanel, BorderLayout.CENTER);
@@ -919,6 +1168,10 @@ public class GUI {
         return windowPanel;
     }
 
+    /**
+     * This method creates and update the main frame {frame}. <br />
+     * The main frame includes the sidebar, header and footer. <br />
+     */
     private void setMainFrame() {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(createSidebar(), BorderLayout.WEST);
@@ -928,46 +1181,153 @@ public class GUI {
         frame.revalidate();
     }
 
-    private JPanel createSidebar() {
-        if (isUserLoggedIn) {
-            JPanel panel = new JPanel();
-            panel.add(new JLabel("Sidebar"));
-            panel.setBackground(Color.BLUE);
-            panel.add(new JLabel("Hej"));
-            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-            return panel;
-        } else {
-            JPanel panel = new JPanel();
-            panel.add(new JLabel("Sidebar"));
-            panel.setBackground(Color.RED);
-            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-            panel.setForeground(Color.WHITE);
-            return panel;
-        }
-    }
 
-    private JPanel createHeader() {
-        JPanel panel = new JPanel();
-        if (isUserLoggedIn) {
-            JLabel customerName = new JLabel(bankLogic.findCustomerByPersonalNumber(socialSecurityNumber).getFirstName() + " " + bankLogic.findCustomerByPersonalNumber(socialSecurityNumber).getLastName());
-            panel.add(customerName, BorderLayout.NORTH);
-            panel.setBackground(Color.BLUE);
-            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-            panel.setForeground(Color.WHITE);
-            return panel;
-        }
-        panel.add(new JLabel("Header"));
-        panel.setBackground(Color.RED);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    /**
+     * This method creates and manage the sidebar. <br />
+     *
+     * @return
+     */
+    private JPanel createSidebar() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        JLabel banksWebsite = createLink("Besök vår hemsida", "https://www.google.com");
+        banksWebsite.setFont(new Font("SansSerif", Font.BOLD, 20));
+        panel.add(banksWebsite, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        Image bankOffice = loadImage("bank-office.jpg");
+        bankOffice = bankOffice.getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        JLabel bankOfficeLabel = new JLabel(new ImageIcon(bankOffice));
+        panel.add(bankOfficeLabel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        JLabel welcomeMessageLabel = new JLabel("<html><div style='text-align: center; font-family: sans-sarif'>Välkommen till " + bankName + "</div></html>");
+        panel.add(welcomeMessageLabel, gbc);
+        panel.setBackground(Color.CYAN);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        panel.add(new JLabel("Följ oss på sociala medier:"), gbc);
+
+        // add banks social media icons and links to the panel
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        panel.add(createIconLink("facebook.jpg", "https://www.facebook.com/"), gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        panel.add(createIconLink("twitter.jpg", "https://twitter.com/"), gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        panel.add(createIconLink("instagram.png", "https://www.instagram.com/"), gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        panel.add(createIconLink("youtube.png", "https://www.youtube.com/"), gbc);
+
+
         return panel;
     }
 
-    private JPanel createFooter() {
-        JPanel panel = new JPanel();
-        panel.add(new JLabel("Footer"));
-        panel.setBackground(Color.BLUE);
+    /**
+     * This method creates a JLabel with a link. <br />
+     *
+     * @param text The text to be shown in the JLabel. <br />
+     * @param link The link to be opened when the user clicks on the JLabel. <br />
+     * @return The JLabel with the link. <br />
+     */
+    private JLabel createLink(String text, String link) {
+        JLabel label = new JLabel("<html><a href='" + link + "'>" + text + "</a></html>");
+        label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                try {
+                    Desktop.getDesktop().browse(new URI(link));
+                } catch (IOException | URISyntaxException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        return label;
+    }
+
+    /**
+     * This method creates a JLabel with an icon and a link. <br />
+     *
+     * @param iconPath The path to the icon. <br />
+     * @param link     The link to be opened when the user clicks on the JLabel. <br />
+     * @return The JLabel with the icon and the link. <br />
+     */
+    private JLabel createIconLink(String iconPath, String link) {
+        Image icon = loadImage(iconPath);
+        icon = icon.getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+        JLabel iconLabel = new JLabel(new ImageIcon(icon));
+        iconLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        iconLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                try {
+                    Desktop.getDesktop().browse(new URI(link));
+                } catch (IOException | URISyntaxException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        return iconLabel;
+    }
+
+    /**
+     * This method creates the header, if a user logged in, the header will show the customer's name. <br />
+     * Otherwise a welcome message
+     *
+     * @return The header panel. <br />
+     */
+    private JPanel createHeader() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.GREEN);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        panel.setForeground(Color.WHITE);
+
+        JLabel titleLabel;
+        if (isUserLoggedIn) {
+            Customer loggedInCustomer = bankLogic.findCustomerByPersonalNumber(socialSecurityNumber);
+            titleLabel = new JLabel(loggedInCustomer.getFirstName() + " " + loggedInCustomer.getLastName());
+        } else {
+            titleLabel = new JLabel("Välkommen till " + bankName);
+        }
+
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+        titleLabel.setForeground(Color.WHITE);
+        panel.add(titleLabel, BorderLayout.EAST);
+
+        return panel;
+    }
+
+    /**
+     * This method creates the footer. <br />
+     * The footer contains: bank name, address, phone number and email. <br />
+     *
+     * @return The footer panel. <br />
+     */
+    private JPanel createFooter() {
+        JPanel panel = new JPanel(new BorderLayout());
+        String footerText = "<html>" + bankName + " © 2023 <br>";
+        footerText += "Adress: Stockholm, Sweden" + "<br>";
+        footerText += "Telefon: 08-123 456 78" + "<br>";
+        footerText += "E-post: mail@mail.com" + "</html>";
+        JLabel footerLabel = new JLabel(footerText);
+        footerLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        footerLabel.setForeground(Color.WHITE);
+        footerLabel.setHorizontalAlignment(SwingConstants.CENTER); // Set horizontal alignment to center
+        panel.setBackground(Color.BLUE);
+        panel.add(footerLabel, BorderLayout.CENTER);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         return panel;
     }
 }

@@ -1,0 +1,14 @@
+Kontoinnehavare: Maria Johansson
+Kontonummer: 1006
+Kontotyp: Kreditkonto
+Datum: 2023-12-10 21:30:00
+Saldo: 900,00 kr
+
+Kreditgräns: 900,00 kr
+Ränta: 0.5 %
+#	Datum	Belopp	Transaktionstyp	Balans
+================================================================
+1	2023-12-10 21:29:10	1 000,00 kr	Insättning	1 000,00 kr
+2	2023-12-10 21:29:17	−100,00 kr	Uttag	900,00 kr
+================================================================
+Slut på rapporten.

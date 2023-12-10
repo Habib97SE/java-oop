@@ -9,38 +9,28 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 public class Transaction implements Serializable {
-    private LocalDateTime date;
+    private String date;
     private Double amount;
     private Double newBalance;
     private String transactionType;
 
-    public Transaction(LocalDateTime date, Double amount, Double newBalance) {
+    public Transaction(String date, Double amount, Double newBalance) {
         this.date = date;
         this.amount = amount;
         this.newBalance = newBalance;
         if (amount > 0) {
-            this.transactionType = "Deposit";
+            this.transactionType = "Insättning";
         } else {
-            this.transactionType = "Withdrawal";
+            this.transactionType = "Uttag";
         }
     }
 
-    public Transaction(String date, Double amount, Double newBalance) {
-        this.date = LocalDateTime.parse(date);
-        this.amount = amount;
-        this.newBalance = newBalance;
-        if (amount > 0) {
-            this.transactionType = "Deposit";
-        } else {
-            this.transactionType = "Withdrawal";
-        }
-    }
 
-    public LocalDateTime getDate() {
+    public String getDate() {
         return date;
     }
 
-    public void setDate(LocalDateTime date) {
+    public void setDate(String date) {
         this.date = date;
     }
 

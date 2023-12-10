@@ -17,7 +17,10 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+// import LocalDateTime
+import java.time.LocalDateTime;
 
 public class BankLogic {
     private ArrayList<Customer> allCustomers = new ArrayList<>();
@@ -341,16 +344,18 @@ public class BankLogic {
         return removedCustomer;
     }
 
-    public boolean exportCustomers(String fileName) {
-        // print the current directory
-        System.out.println("Current directory: " + System.getProperty("user.dir"));
-        Path path = Paths.get("src", "habhez0_files", fileName).normalize();
-        String fullPath = path.toString();
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fullPath))) {
+    public boolean exportCustomers(String filePath, JFrame frame) {
+        try {
+            FileOutputStream fos = new FileOutputStream(filePath);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
             oos.writeObject(allCustomers);
+            oos.close();
+            fos.close();
             return true;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException ioe) {
+            JOptionPane.showMessageDialog(frame, "Filen du försöker exportera till finns inte.", "Fel", JOptionPane.ERROR_MESSAGE);
+            ioe.printStackTrace();
+            return false;
         }
     }
 
@@ -413,4 +418,28 @@ public class BankLogic {
         return false;
     }
 
+    public void loadTransactions(File file, JFrame frame) {
+        try {
+            String fullString = "";
+            Path path = Paths.get("src", "habhez0_files", file.getName()).normalize();
+            String fullPath = path.toString();
+            BufferedReader br = Files.newBufferedReader(Paths.get(fullPath));
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(" ");
+                String pNo = values[0];
+                int accountNumber = Integer.parseInt(values[1]);
+                String accountType = values[2];
+                int amount = Integer.parseInt(values[3]);
+                String transactionType = values[4];
+                String date = values[5];
+                String time = values[6];
+                LocalDateTime dateTime = LocalDateTime.parse(date + "T" + time);
+            }
+            br.close();
+        } catch (IOException ioe) {
+            JOptionPane.showMessageDialog(frame, "Filen du försöker importera finns inte.", "Fel", JOptionPane.ERROR_MESSAGE);
+            ioe.printStackTrace();
+        }
+    }
 }

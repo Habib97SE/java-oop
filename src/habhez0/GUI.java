@@ -2,12 +2,15 @@ package habhez0;
 
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -16,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.io.FileReader;
 
 
 /**
@@ -121,8 +125,6 @@ public class GUI {
      *     <ol>
      *         <li>Import Customers: Import customers from a file. {@link #createImportCustomersView()} ()}</li>
      *         <li>Export Customers: Export customers to a file. {@link #createExportCustomersView()} ()}</li>
-     *         <li>Import Accounts: Import accounts from a file. {@link #createImportAccountsView()} ()}</li>
-     *         <li>Export Accounts: Export accounts to a file. {@link #createExportAccountsView()} ()}</li>
      *    </ol>
      * </p>
      */
@@ -130,8 +132,6 @@ public class GUI {
         JMenu menu = new JMenu("Banktjänsteman");
         JMenuItem importCustomers = new JMenuItem("Importera kunder");
         JMenuItem exportCustomers = new JMenuItem("Exportera kunder");
-        JMenuItem importAccounts = new JMenuItem("Importera konton");
-        JMenuItem exportAccounts = new JMenuItem("Exportera konton");
         JMenuItem listAllCustomers = new JMenuItem("Lista alla kunder");
 
         /* action listener to importCustomers  */
@@ -148,15 +148,6 @@ public class GUI {
             createExportCustomersView();
         });
 
-        /* action listener to importAccounts  */
-        importAccounts.addActionListener(e -> {
-            createImportAccountsView();
-        });
-
-        /* action listener to exportAccounts  */
-        exportAccounts.addActionListener(e -> {
-            createExportAccountsView();
-        });
 
         listAllCustomers.addActionListener(e -> {
             createListAllCustomersView();
@@ -165,8 +156,7 @@ public class GUI {
         // add menu items to menu
         menu.add(importCustomers);
         menu.add(exportCustomers);
-        menu.add(importAccounts);
-        menu.add(exportAccounts);
+
         menu.add(listAllCustomers);
 
         // add menu to the menubar
@@ -223,33 +213,6 @@ public class GUI {
 
     }
 
-    /**
-     * <p style="line-height: 1.5;">
-     * This method creates and manage the import customers view. <br />
-     * A bank clerk needs to import and load exisiting customer from a data file called customers.dat.
-     * The data file "customers.dat" contains all necessary information about the customers. <br />
-     * The data file is located in the habhez-0_files directory. <br />
-     * The data file is a serialized object of the Customer class. <br />
-     * The data file is created by the bank clerk. <br />
-     * </p>
-     */
-    private void createExportAccountsView() {
-        // TODO: add functionality and JPanel view to this method
-    }
-
-    /**
-     * Creates and manages the import accounts view. <br />
-     * <p style="line-height: 1.5;">
-     * A bank clerk needs to import and load exisiting accounts from a data file called accounts.dat. <br />
-     * The data file "accounts.dat" contains all necessary information about the accounts. <br />
-     * The data file is located in the habhez-0_files directory. <br />
-     * The data file is a serialized object of the Account class. <br />
-     * The data file is created by the bank clerk. <br />
-     * </p>
-     */
-    private void createImportAccountsView() {
-        // TODO: add functionality and JPanel view to this method
-    }
 
     /**
      * Creates and manages the import customers view. <br />
@@ -265,22 +228,41 @@ public class GUI {
      * </p>
      */
     private void createExportCustomersView() {
-        String fileName = JOptionPane.showInputDialog(frame, "Ange filnamn:", "Exportera kunder", JOptionPane.PLAIN_MESSAGE);
-        if (fileName == null) {
-            JOptionPane.showMessageDialog(frame, "Du måste ange ett filnamn.", "Fel", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Exportera kunder");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("DAT Filer", "dat"));
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        Path path = Paths.get("src", "habhez0_files");
+        fileChooser.setCurrentDirectory(path.toFile());
 
-        if (fileName.isEmpty()) {
-            JOptionPane.showMessageDialog(frame, "Du måste ange ett filnamn.", "Fel", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        int userSelection = fileChooser.showSaveDialog(null);
 
-        if (!fileName.endsWith(".dat")) {
-            fileName += ".dat";
-        }
-        if (bankLogic.exportCustomers(fileName)) {
-            JOptionPane.showMessageDialog(frame, "Kunder exporterade.", "Kunder exporterade", JOptionPane.INFORMATION_MESSAGE);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            String filePath = fileToSave.getAbsolutePath();
+
+            // Append ".dat" if it's not present
+            if (!filePath.toLowerCase().endsWith(".dat")) {
+                filePath += ".dat";
+            }
+
+            File file = new File(filePath);
+
+            // check if file already exists
+            if (file.exists()) {
+                int result = JOptionPane.showConfirmDialog(frame, "Filen finns redan. Vill du ersätta den?", "Filen finns redan", JOptionPane.YES_NO_OPTION);
+                if (result == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+
+
+            boolean result = bankLogic.exportCustomers(filePath, frame);
+            if (result) {
+                JOptionPane.showMessageDialog(frame, "Kunder exporterade.", "Kunder exporterade", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(frame, "Kunde inte exportera kunder.", "Fel", JOptionPane.ERROR_MESSAGE);
+            }
         } else {
             JOptionPane.showMessageDialog(frame, "Kunde inte exportera kunder.", "Fel", JOptionPane.ERROR_MESSAGE);
         }
@@ -377,6 +359,7 @@ public class GUI {
         JMenuItem deposit = new JMenuItem("Insättning");
         JMenuItem withdraw = new JMenuItem("Uttag");
         JMenuItem getTransactions = new JMenuItem("Visa transaktioner");
+        JMenuItem loadTransactions = new JMenuItem("Ladda upp transaktioner");
         JMenuItem closeAccount = new JMenuItem("Stäng konto");
 
         /* action listener to createSavingAccount  */
@@ -404,6 +387,10 @@ public class GUI {
             createTransactionsView();
         });
 
+        loadTransactions.addActionListener(e -> {
+            createLoadTransactionsView();
+        });
+
         /* action listener to closeAccount  */
         closeAccount.addActionListener(e -> {
             createCloseAccountView();
@@ -414,9 +401,98 @@ public class GUI {
         menu.add(deposit);
         menu.add(withdraw);
         menu.add(getTransactions);
+        menu.add(loadTransactions);
         menu.add(closeAccount);
 
         menuBar.add(menu);
+    }
+
+    private void createLoadTransactionsView() {
+        JPanel loadTransactionsPane = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        JLabel titleLabel = new JLabel("Ladda upp transaktioner");
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+        loadTransactionsPane.add(titleLabel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel descriptionLabel = new JLabel("Du kan visa transaktioner genom att ladda upp en fil.");
+        descriptionLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        loadTransactionsPane.add(descriptionLabel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        loadTransactionsPane.add(new JLabel("Välj en fil: "), gbc);
+
+        gbc.gridx = 2;
+        gbc.gridy = 2;
+
+        JButton chooseFile = new JButton("Välj fil");
+        loadTransactionsPane.add(chooseFile, gbc);
+
+        chooseFile.addActionListener(e -> {
+            File file = loadTextFile();
+            if (file == null) {
+                JOptionPane.showMessageDialog(frame, "Kunde inte ladda upp transaktioner.", "Fel", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            loadAndShowTransactions(file.getAbsolutePath());
+        });
+
+
+        frame.setTitle("Ladda upp transaktioner" + " - " + bankName);
+        frame.setContentPane(setWindowPanel(loadTransactionsPane));
+        frame.revalidate();
+    }
+
+    public File loadTextFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        Path path = Paths.get("src", "habhez0_files");
+        fileChooser.setCurrentDirectory(path.toFile());
+        fileChooser.setDialogTitle("Välj en fil att importera");
+        // let user choose only files with .dat extension
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Textfiler", "txt"));
+        int result = fileChooser.showOpenDialog(frame);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            return fileChooser.getSelectedFile();
+        }
+        return null;
+    }
+
+    public void loadAndShowTransactions(String filePath) {
+        StringBuilder htmlContent = new StringBuilder("<html>");
+        boolean isTransactionSection = false;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("Kontoinnehavare:") || line.startsWith("Kontonummer:")) {
+                    htmlContent.append(line).append("<br>");
+                } else if (line.contains("=")) {
+                    isTransactionSection = !isTransactionSection; // Toggle the flag at each line of '='
+                    if (isTransactionSection) {
+                        htmlContent.append("<table><tr><th>#</th><th>Datumn</th><th>Balans</th><th>Transaktionstyp</th><th>Balans</th></tr>");
+                    } else {
+                        htmlContent.append("</table>");
+                    }
+                } else if (isTransactionSection) {
+                    htmlContent.append("<tr><td>").append(line.replace("\t", "</td><td>")).append("</td></tr>");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Fel i att ladda filen: " + e.getMessage());
+            return;
+        }
+
+        htmlContent.append("</html>");
+        JOptionPane.showMessageDialog(null, htmlContent.toString());
     }
 
     /**

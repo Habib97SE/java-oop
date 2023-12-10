@@ -92,9 +92,15 @@ public abstract class Account implements Serializable {
 
     public abstract boolean withdraw(double amount);
 
+    public String formatDateTime(String dateTimeStr) {
+        LocalDateTime dateTime = LocalDateTime.parse(dateTimeStr);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        return dateTime.format(formatter);
+    }
+
     public boolean addTransaction(double amount) {
         LocalDateTime date = LocalDateTime.now();
-        Transaction transaction = new Transaction(date, amount, this.balance);
+        Transaction transaction = new Transaction(formatDateTime(String.valueOf(date)), amount, this.balance);
         this.transactions.add(transaction);
         return true;
     }
@@ -151,7 +157,7 @@ public abstract class Account implements Serializable {
             LocalDateTime date = LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String currentDate = date.format(formatter);
-            String header = "#\t" + "Date\t" + "Amount\t" + "Transaction type\t" + "Balance\n";
+            String header = "#\t" + "Datum\t" + "Belopp\t" + "Transaktionstyp\t" + "Balans\n";
 
             try (Writer fileWriter = new OutputStreamWriter(new FileOutputStream(file, true), StandardCharsets.UTF_8)) {
                 fileWriter.write("Kontoinnehavare: " + accountHolderName + "\n");
@@ -179,7 +185,6 @@ public abstract class Account implements Serializable {
                     fileWriter.write(index + transactionDate + amount + transactionType + balance);
                     count++;
                 }
-                fileWriter.write("================================================================\n");
                 fileWriter.write("================================================================\n");
                 fileWriter.write("Slut på rapporten.");
                 fileWriter.close();

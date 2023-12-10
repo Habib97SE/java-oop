@@ -1,11 +1,13 @@
 package habhez0;
 
+import java.io.Serializable;
+
 /**
  * @author: Habib Hezarehee (habhez-0)
  * @email: habhez-0@student.ltu.se
  */
 
-public class CreditAccount extends Account
+public class CreditAccount extends Account implements Serializable
 {
     private double creditLimit;
     private double debtRate;

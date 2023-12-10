@@ -1,8 +1,9 @@
 import habhez0.GUI;
 
+import java.io.*;
+
 public class App {
-    public static void main(String[] args) {
-        GUI gui = new GUI(800, 600);
-        gui.start();
+    public static void main(String[] args) throws IOException {
+        new GUI().start();
     }
 }

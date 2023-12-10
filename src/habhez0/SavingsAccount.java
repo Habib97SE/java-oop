@@ -1,11 +1,13 @@
 package habhez0;
 
+import java.io.Serializable;
+
 /**
  * @author: Habib Hezarehee (habhez-0)
  * @email: habhez-0@student.ltu.se
  */
 
-public class SavingsAccount extends Account
+public class SavingsAccount extends Account implements Serializable
 {
     private boolean withdrawLimitReached;
 

@@ -12,6 +12,11 @@ package habhez0;
  * @email: habhez-0@student.ltu.se
  */
 
+import javax.swing.*;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class BankLogic {
@@ -55,12 +60,8 @@ public class BankLogic {
      *
      * @return : An arrayList of all customers personal info
      */
-    public ArrayList<String> getAllCustomers() {
-        ArrayList<String> allCustomersStr = new ArrayList<String>();
-        for (Customer allCustomer : allCustomers)
-            allCustomersStr.add(allCustomer.toString());
-
-        return allCustomersStr;
+    public ArrayList<Customer> getAllCustomers() {
+        return allCustomers;
     }
 
     /**
@@ -338,6 +339,78 @@ public class BankLogic {
         allCustomers.remove(customer);
 
         return removedCustomer;
+    }
+
+    public boolean exportCustomers(String fileName) {
+        // print the current directory
+        System.out.println("Current directory: " + System.getProperty("user.dir"));
+        Path path = Paths.get("src", "habhez0_files", fileName).normalize();
+        String fullPath = path.toString();
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fullPath))) {
+            oos.writeObject(allCustomers);
+            return true;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void updateAccountNumber() {
+        // loop through the allCustomers
+        int accountNumber = 1000;
+        for (Customer customer : allCustomers) {
+            for (SavingsAccount savingsAccount : customer.getSavingsAccounts()) {
+                accountNumber = savingsAccount.getCustomerAccountNumber();
+            }
+            for (CreditAccount creditAccount : customer.getCreditAccounts()) {
+                accountNumber = creditAccount.getCustomerAccountNumber();
+            }
+        }
+        accountNumber++;
+        Account.accountNumber = accountNumber;
+    }
+
+
+    public Boolean importCustomers(String fileName, JFrame frame) throws IOException, ClassNotFoundException {
+        Path path = Paths.get("src", "habhez0_files", fileName).normalize();
+        String fullPath = path.toString();
+        try {
+            FileInputStream fis = new FileInputStream(fullPath);
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            allCustomers = (ArrayList<Customer>) ois.readObject();
+            ois.close();
+            fis.close();
+            updateAccountNumber();
+            return true;
+        } catch (FileNotFoundException fnfe) {
+            JOptionPane.showMessageDialog(frame, "Filen du försöker importera finns inte.", "Fel", JOptionPane.ERROR_MESSAGE);
+            fnfe.printStackTrace();
+            return false;
+        } catch (IOException ioe) {
+            JOptionPane.showMessageDialog(frame, "Filen du försöker importera finns inte.", "Fel", JOptionPane.ERROR_MESSAGE);
+            ioe.printStackTrace();
+            return false;
+        } catch (ClassNotFoundException c) {
+            JOptionPane.showMessageDialog(frame, "Filen du försöker importera är inte kompatibel med programmet.", "Fel", JOptionPane.ERROR_MESSAGE);
+            c.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean writeToTextFile(Integer accountNumber) {
+        String fileName = accountNumber + ".txt";
+        for (Customer customer : allCustomers) {
+            for (SavingsAccount savingsAccount : customer.getSavingsAccounts()) {
+                if (savingsAccount.getCustomerAccountNumber() == accountNumber) {
+                    return savingsAccount.writeTransactionsInTextFile(fileName, customer.getFirstName() + " " + customer.getLastName());
+                }
+            }
+            for (CreditAccount creditAccount : customer.getCreditAccounts()) {
+                if (creditAccount.getCustomerAccountNumber() == accountNumber) {
+                    return creditAccount.writeTransactionsInTextFile(fileName, customer.getFirstName() + " " + customer.getLastName());
+                }
+            }
+        }
+        return false;
     }
 
 }

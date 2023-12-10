@@ -5,10 +5,10 @@ package habhez0;
  * @email: habhez-0@student.ltu.se
  */
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
-public class Transaction {
+public class Transaction implements Serializable {
     private LocalDateTime date;
     private Double amount;
     private Double newBalance;

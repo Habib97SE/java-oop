@@ -1,5 +1,23 @@
 package habhez0;
 
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Objects;
+
+
 /**
  * @author: Habib Hezarehee (habhez-0)
  * @email: habhez-0@student.ltu.se
@@ -21,23 +39,8 @@ package habhez0;
  *     The GUI class has a BankLogic object to access the bank's logic. <br />
  * </p>
  */
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Objects;
-
-
 public class GUI {
+
     private int width;
     private int height;
     private JMenuBar menuBar;
@@ -54,6 +57,18 @@ public class GUI {
         menuBar = new JMenuBar();
     }
 
+    public GUI() {
+        this.width = 800;
+        this.height = 900;
+        menuBar = new JMenuBar();
+    }
+
+    /**
+     * Initializes and displays the main JFrame for the banking application.
+     * Sets up the frame with the specified title, size, close operation,
+     * menu bar, and icon. The method also adds various menus to the menu bar
+     * and sets the main content pane of the frame.
+     */
     public void start() {
         frame = new JFrame("Huvudsida" + " - " + bankName);
         frame.setSize(width, height);
@@ -61,6 +76,7 @@ public class GUI {
         addFileMenu();
         addAccountMenu();
         addCustomerMenu();
+        addBankClerkMenu();
         ImageIcon icon = createImageIcon();
         frame.setIconImage(icon.getImage());
         frame.setJMenuBar(menuBar);
@@ -69,7 +85,7 @@ public class GUI {
     }
 
     /**
-     * Load and return the ImageIcon object from the path specified.
+     * Loads and returns the ImageIcon object from the path specified.
      *
      * @return ImageIcon object: icon.jpg from the path specified, null if the path is invalid or the image is not found.
      */
@@ -96,6 +112,212 @@ public class GUI {
         }
         return null;
     }
+
+    /**
+     * Creates a JMenu for bank clerks functions that are only available to bank clerks. <br /><br />
+     *
+     * <p style="line-height: 1.5;">
+     * The Bank Clerk menu includes four menu items:
+     *     <ol>
+     *         <li>Import Customers: Import customers from a file. {@link #createImportCustomersView()} ()}</li>
+     *         <li>Export Customers: Export customers to a file. {@link #createExportCustomersView()} ()}</li>
+     *         <li>Import Accounts: Import accounts from a file. {@link #createImportAccountsView()} ()}</li>
+     *         <li>Export Accounts: Export accounts to a file. {@link #createExportAccountsView()} ()}</li>
+     *    </ol>
+     * </p>
+     */
+    public void addBankClerkMenu() {
+        JMenu menu = new JMenu("Banktjänsteman");
+        JMenuItem importCustomers = new JMenuItem("Importera kunder");
+        JMenuItem exportCustomers = new JMenuItem("Exportera kunder");
+        JMenuItem importAccounts = new JMenuItem("Importera konton");
+        JMenuItem exportAccounts = new JMenuItem("Exportera konton");
+        JMenuItem listAllCustomers = new JMenuItem("Lista alla kunder");
+
+        /* action listener to importCustomers  */
+        importCustomers.addActionListener(e -> {
+            try {
+                createImportCustomersView();
+            } catch (IOException | ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        /* action listener to exportCustomers  */
+        exportCustomers.addActionListener(e -> {
+            createExportCustomersView();
+        });
+
+        /* action listener to importAccounts  */
+        importAccounts.addActionListener(e -> {
+            createImportAccountsView();
+        });
+
+        /* action listener to exportAccounts  */
+        exportAccounts.addActionListener(e -> {
+            createExportAccountsView();
+        });
+
+        listAllCustomers.addActionListener(e -> {
+            createListAllCustomersView();
+        });
+
+        // add menu items to menu
+        menu.add(importCustomers);
+        menu.add(exportCustomers);
+        menu.add(importAccounts);
+        menu.add(exportAccounts);
+        menu.add(listAllCustomers);
+
+        // add menu to the menubar
+        menuBar.add(menu);
+
+    }
+
+    private void createListAllCustomersView() {
+        JPanel listAllCustomersPane = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        JLabel panelTitleLabel = new JLabel("Lista alla kunder");
+        panelTitleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+        listAllCustomersPane.add(panelTitleLabel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        JLabel descriptionLabel = new JLabel("Här kan ni se alla kunder som finns i banken.");
+        descriptionLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        listAllCustomersPane.add(descriptionLabel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        String[] customerTableHeader = {"#", "Personnummer", "Namn"};
+        DefaultTableModel model = new DefaultTableModel(0, 5);
+        model.setColumnIdentifiers(customerTableHeader);
+        JTable customerTable = new JTable(model);
+        customerTable.setPreferredScrollableViewportSize(new Dimension(500, 70));
+        customerTable.setFillsViewportHeight(true);
+
+        for (int i = 0; i < bankLogic.getAllCustomers().size(); i++) {
+            Customer customer = bankLogic.getAllCustomers().get(i);
+            String name = customer.getFirstName() + ' ' + customer.getLastName();
+            String[] customerDetails = {String.valueOf(i + 1), customer.getPersonalNumber(), name};
+            model.addRow(customerDetails);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(customerTable);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2; // Span the width of the pane
+        gbc.fill = GridBagConstraints.BOTH; // Allow both horizontal and vertical stretching
+        listAllCustomersPane.add(scrollPane, gbc);
+
+        frame.setTitle("Lista alla kunder" + " - " + bankName);
+        frame.setContentPane(setWindowPanel(listAllCustomersPane));
+        frame.revalidate();
+
+
+    }
+
+    /**
+     * <p style="line-height: 1.5;">
+     * This method creates and manage the import customers view. <br />
+     * A bank clerk needs to import and load exisiting customer from a data file called customers.dat.
+     * The data file "customers.dat" contains all necessary information about the customers. <br />
+     * The data file is located in the habhez-0_files directory. <br />
+     * The data file is a serialized object of the Customer class. <br />
+     * The data file is created by the bank clerk. <br />
+     * </p>
+     */
+    private void createExportAccountsView() {
+        // TODO: add functionality and JPanel view to this method
+    }
+
+    /**
+     * Creates and manages the import accounts view. <br />
+     * <p style="line-height: 1.5;">
+     * A bank clerk needs to import and load exisiting accounts from a data file called accounts.dat. <br />
+     * The data file "accounts.dat" contains all necessary information about the accounts. <br />
+     * The data file is located in the habhez-0_files directory. <br />
+     * The data file is a serialized object of the Account class. <br />
+     * The data file is created by the bank clerk. <br />
+     * </p>
+     */
+    private void createImportAccountsView() {
+        // TODO: add functionality and JPanel view to this method
+    }
+
+    /**
+     * Creates and manages the import customers view. <br />
+     * <p style="line-height: 1.5;">
+     * <ul>
+     *     <li>A bank clerk needs to export all customers to a data file called customers.dat.</li>
+     *     <li>The data file "customers.dat" contains all necessary information about the customers.</li>
+     *     <li>The data file is located in the habhez-0_files directory.</li>
+     *     <li>The data file is a serialized object of the Customer class.</li>
+     *     <li>The data file is created by the bank clerk.</li>
+     *     <li>The data file is used to import customers.</li>
+     * </ul>
+     * </p>
+     */
+    private void createExportCustomersView() {
+        String fileName = JOptionPane.showInputDialog(frame, "Ange filnamn:", "Exportera kunder", JOptionPane.PLAIN_MESSAGE);
+        if (fileName == null) {
+            JOptionPane.showMessageDialog(frame, "Du måste ange ett filnamn.", "Fel", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (fileName.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "Du måste ange ett filnamn.", "Fel", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (!fileName.endsWith(".dat")) {
+            fileName += ".dat";
+        }
+        if (bankLogic.exportCustomers(fileName)) {
+            JOptionPane.showMessageDialog(frame, "Kunder exporterade.", "Kunder exporterade", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(frame, "Kunde inte exportera kunder.", "Fel", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Creates and manages the import customers view. <br />
+     * <p style="line-height: 1.5;">
+     * A bank clerk needs to import and load exisiting customer from a data file called customers.dat. <br />
+     * <ul>
+     *      <li>The data file "customers.dat" contains all necessary information about the customers.</li>
+     *      <li>The data file is located in the habhez-0_files directory.</li>
+     *      <li>The data file is a serialized object of the Customer class.</li>
+     *      <li>The data file is created by the bank clerk.</li>
+     *      <li>The data file is used to import customers.</li>
+     * </ul>
+     * </p>
+     */
+    private void createImportCustomersView() throws IOException, ClassNotFoundException {
+        JFileChooser fileChooser = new JFileChooser();
+        Path path = Paths.get("src", "habhez0_files");
+        fileChooser.setCurrentDirectory(path.toFile());
+        fileChooser.setDialogTitle("Välj en fil att importera");
+        // let user choose only files with .dat extension
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Data files", "dat"));
+        int result = fileChooser.showOpenDialog(frame);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            String fileName = fileChooser.getSelectedFile().getName();
+            if (bankLogic.importCustomers(fileName, frame)) {
+                JOptionPane.showMessageDialog(frame, "Kunder importerade.", "Kunder importerade", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(frame, "Kunde inte importera kunder.", "Fel", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+    }
+
 
     /**
      * <p>
@@ -269,6 +491,7 @@ public class GUI {
     }
 
     /**
+     * x
      * This method creates and manage the Transaction view. <br />
      */
     private void createTransactionsView() {
@@ -375,7 +598,13 @@ public class GUI {
         });
 
         printTransactions.addActionListener(e -> {
-            JOptionPane.showMessageDialog(frame, "Funktionen är inte implementerad än.", "Fel", JOptionPane.ERROR_MESSAGE);
+            int accountNumberValue = Integer.parseInt(Objects.requireNonNull(accountNumbers.getSelectedItem()).toString());
+            boolean result = bankLogic.writeToTextFile(accountNumberValue);
+            if (result) {
+                JOptionPane.showMessageDialog(frame, "Transaktioner skrivna till fil.", "Transaktioner skrivna till fil", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(frame, "Kunde inte skriva transaktioner till fil.", "Fel", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         frame.setTitle("Transaktioner" + " - " + bankName);
@@ -669,13 +898,12 @@ public class GUI {
      */
     private void addCustomerMenu() {
         JMenu customerMenu = new JMenu("Kund");
-
         if (!isUserLoggedIn) {
             setCustomerItem.setText("Välj kund");
         } else {
             setCustomerItem.setText("Byt kund");
-            setCustomerItem.setForeground(Color.RED);
         }
+        setCustomerItem.setForeground(Color.RED);
 
         JMenuItem setCustomer = setCustomerItem;
         JMenuItem createCustomer = new JMenuItem("Skapa kund");
@@ -1266,21 +1494,26 @@ public class GUI {
      * @return The JLabel with the icon and the link. <br />
      */
     private JLabel createIconLink(String iconPath, String link) {
-        Image icon = loadImage(iconPath);
-        icon = icon.getScaledInstance(30, 30, Image.SCALE_SMOOTH);
-        JLabel iconLabel = new JLabel(new ImageIcon(icon));
-        iconLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        iconLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                try {
-                    Desktop.getDesktop().browse(new URI(link));
-                } catch (IOException | URISyntaxException ex) {
-                    ex.printStackTrace();
+        try {
+            Image icon = loadImage(iconPath);
+            icon = icon.getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+            JLabel iconLabel = new JLabel(new ImageIcon(icon));
+            iconLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            iconLabel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    try {
+                        Desktop.getDesktop().browse(new URI(link));
+                    } catch (IOException | URISyntaxException ex) {
+                        ex.printStackTrace();
+                    }
                 }
-            }
-        });
-        return iconLabel;
+            });
+            return iconLabel;
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(frame, "Kunde inte skapa ikon.", "Fel", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
     }
 
     /**
@@ -1290,23 +1523,28 @@ public class GUI {
      * @return The header panel. <br />
      */
     private JPanel createHeader() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.GREEN);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        try {
+            JPanel panel = new JPanel(new BorderLayout());
+            panel.setBackground(Color.GREEN);
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel titleLabel;
-        if (isUserLoggedIn) {
-            Customer loggedInCustomer = bankLogic.findCustomerByPersonalNumber(socialSecurityNumber);
-            titleLabel = new JLabel(loggedInCustomer.getFirstName() + " " + loggedInCustomer.getLastName());
-        } else {
-            titleLabel = new JLabel("Välkommen till " + bankName);
+            JLabel titleLabel;
+            if (isUserLoggedIn) {
+                Customer loggedInCustomer = bankLogic.findCustomerByPersonalNumber(socialSecurityNumber);
+                titleLabel = new JLabel(loggedInCustomer.getFirstName() + " " + loggedInCustomer.getLastName());
+            } else {
+                titleLabel = new JLabel("Välkommen till " + bankName);
+            }
+
+            titleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+            titleLabel.setForeground(Color.WHITE);
+            panel.add(titleLabel, BorderLayout.EAST);
+
+            return panel;
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(frame, "Kunde inte skapa header.", "Fel", JOptionPane.ERROR_MESSAGE);
+            return null;
         }
-
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
-        titleLabel.setForeground(Color.WHITE);
-        panel.add(titleLabel, BorderLayout.EAST);
-
-        return panel;
     }
 
     /**
@@ -1316,18 +1554,24 @@ public class GUI {
      * @return The footer panel. <br />
      */
     private JPanel createFooter() {
-        JPanel panel = new JPanel(new BorderLayout());
-        String footerText = "<html>" + bankName + " © 2023 <br>";
-        footerText += "Adress: Stockholm, Sweden" + "<br>";
-        footerText += "Telefon: 08-123 456 78" + "<br>";
-        footerText += "E-post: mail@mail.com" + "</html>";
-        JLabel footerLabel = new JLabel(footerText);
-        footerLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
-        footerLabel.setForeground(Color.WHITE);
-        footerLabel.setHorizontalAlignment(SwingConstants.CENTER); // Set horizontal alignment to center
-        panel.setBackground(Color.BLUE);
-        panel.add(footerLabel, BorderLayout.CENTER);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        return panel;
+        try {
+            JPanel panel = new JPanel(new BorderLayout());
+            String footerText = "<html>" + bankName + " © 2023 <br>";
+            footerText += "Adress: Stockholm, Sweden" + "<br>";
+            footerText += "Telefon: 08-123 456 78" + "<br>";
+            footerText += "E-post: mail@mail.com" + "</html>";
+            JLabel footerLabel = new JLabel(footerText);
+            footerLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
+            footerLabel.setForeground(Color.WHITE);
+            footerLabel.setHorizontalAlignment(SwingConstants.CENTER); // Set horizontal alignment to center
+            panel.setBackground(Color.BLUE);
+            panel.add(footerLabel, BorderLayout.CENTER);
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            return panel;
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(frame, "Kunde inte skapa footer.", "Fel", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+
     }
 }

@@ -12,11 +12,12 @@ package habhez0;
  * @email: habhez-0@student.ltu.se
  */
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Objects;
 
 
-public class Customer {
+public class Customer implements Serializable {
     private String firstName;
     private String lastName;
     final private String personalNumber;

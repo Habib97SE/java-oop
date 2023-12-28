@@ -141,14 +141,14 @@ public abstract class Account implements Serializable {
         return fileName;
     }
 
-    public Boolean writeTransactionsInTextFile(String fileName, String accountHolderName) {
+    public Boolean writeTransactionsInTextFile(String fileName, String accountHolderName, Path filePath) {
         // create a .txt file with the name of the account holder, account number and account type.
         // add today's date and time into the file.
         // Create table with the following columns: #, Date, Amount, Transaction Type, Balance
         // add the transactions into the table
         try {
             fileName = cleanFileName(fileName);
-            Path path = Paths.get("src", "habhez0_files", fileName).normalize();
+            Path path = filePath.resolve(fileName);
             File file = new File(path.toString());
             if (!file.exists() && !file.createNewFile()) {
                 throw new IOException("File could not be created");

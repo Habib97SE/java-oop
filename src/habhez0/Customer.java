@@ -47,14 +47,9 @@ public class Customer implements Serializable {
 
     public ArrayList<Account> getAccounts() {
         ArrayList<Account> accounts = new ArrayList<>();
-        ArrayList<Account> accountsInfo = new ArrayList<>();
         accounts.addAll(savingsAccounts);
         accounts.addAll(creditAccounts);
-        for (Account account : accounts) {
-            if (account.getAccountIsActive())
-                accountsInfo.add(account);
-        }
-        return accountsInfo;
+        return new ArrayList<>(accounts);
     }
 
     public String getFirstName() {
@@ -106,7 +101,6 @@ public class Customer implements Serializable {
     }
 
 
-
     public ArrayList<SavingsAccount> getSavingsAccounts() {
         return savingsAccounts;
     }
@@ -123,17 +117,37 @@ public class Customer implements Serializable {
         this.creditAccounts = creditAccounts;
     }
 
+
     @Override
     public String toString() {
-        return this.personalNumber + " " + this.firstName + " " + this.lastName;
+        return "[ " + this.getPersonalNumber() + " " + this.getFirstName() + " " + this.getLastName() +
+                getAccounts() + " ]";
     }
 
     public ArrayList<String> getAccountsNumber() {
         ArrayList<String> accounts = new ArrayList<>();
-        for (CreditAccount creditAccount : creditAccounts)
+        for (CreditAccount creditAccount : creditAccounts) {
+            if (!creditAccount.getAccountIsActive())
+                continue;
             accounts.add(String.valueOf(creditAccount.getCustomerAccountNumber()));
-        for (SavingsAccount savingAccount : savingsAccounts)
+        }
+        for (SavingsAccount savingAccount : savingsAccounts) {
+            if (!savingAccount.getAccountIsActive())
+                continue;
             accounts.add(String.valueOf(savingAccount.getCustomerAccountNumber()));
+        }
         return accounts;
+    }
+
+    public boolean hasAccount(int accountNumber) {
+        for (Account account : getAccounts()) {
+            if (account.getCustomerAccountNumber() == accountNumber)
+                return true;
+        }
+        return false;
+    }
+
+    public String getFullName() {
+        return this.firstName + " " + this.lastName;
     }
 }

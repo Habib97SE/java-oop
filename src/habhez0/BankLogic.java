@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 
 public class BankLogic {
     private ArrayList<Customer> allCustomers = new ArrayList<>();
+    private Path filePath = Paths.get("src", "habhez0_files").normalize();
 
     /**
      * Check if customer with given pNo already exists in our system.
@@ -42,8 +43,7 @@ public class BankLogic {
 
     public Customer findCustomerByPersonalNumber(String pNo) {
         for (Customer customer : allCustomers) {
-            if (Objects.equals(customer.getPersonalNumber(), pNo))
-                return customer;
+            if (Objects.equals(customer.getPersonalNumber(), pNo)) return customer;
         }
         return null;
     }
@@ -51,8 +51,7 @@ public class BankLogic {
     private Account findCustomerAccount(Customer customer, int accountNumber) {
         ArrayList<Account> accounts = new ArrayList<Account>();
         for (int i = 0; i < accounts.size(); i++) {
-            if (accounts.get(i).getCustomerAccountNumber() == accountNumber)
-                return accounts.get(i);
+            if (accounts.get(i).getCustomerAccountNumber() == accountNumber) return accounts.get(i);
         }
         return null;
     }
@@ -96,12 +95,10 @@ public class BankLogic {
             if (Objects.equals(allCustomer.getPersonalNumber(), pNo)) {
                 customerDetails.add(allCustomer.toString());
                 for (CreditAccount creditAccount : allCustomer.getCreditAccounts()) {
-                    if (creditAccount.getAccountIsActive())
-                        customerDetails.add(creditAccount.getAccountDetails());
+                    if (creditAccount.getAccountIsActive()) customerDetails.add(creditAccount.getAccountDetails());
                 }
                 for (SavingsAccount savingsAccount : allCustomer.getSavingsAccounts()) {
-                    if (savingsAccount.getAccountIsActive())
-                        customerDetails.add(savingsAccount.getAccountDetails());
+                    if (savingsAccount.getAccountIsActive()) customerDetails.add(savingsAccount.getAccountDetails());
                 }
                 return customerDetails;
             }
@@ -113,8 +110,7 @@ public class BankLogic {
         // By default, result is false because if the name and surname are empty and if
         // pNo is not found then we return false
         boolean result = false;
-        if (!customerExists(pNo))
-            return result;
+        if (!customerExists(pNo)) return result;
         for (Customer allCustomer : allCustomers) {
             // if a customer with given pNo found
             if (Objects.equals(allCustomer.getPersonalNumber(), pNo)) {
@@ -139,8 +135,7 @@ public class BankLogic {
      * @return : if customer exists returns the account number of the new account otherwise returns -1
      */
     public int createSavingsAccount(String pNo) {
-        if (!customerExists(pNo))
-            return -1;
+        if (!customerExists(pNo)) return -1;
         for (Customer allCustomer : allCustomers) {
             if (Objects.equals(allCustomer.getPersonalNumber(), pNo))
                 return allCustomer.createNewAccount(0.0, 1.2, "Sparkonto");
@@ -149,8 +144,7 @@ public class BankLogic {
     }
 
     public int createCreditAccount(String pNo) {
-        if (!customerExists(pNo))
-            return -1;
+        if (!customerExists(pNo)) return -1;
         for (Customer customer : allCustomers) {
             if (Objects.equals(customer.getPersonalNumber(), pNo)) {
                 return customer.createNewAccount(0.0, 0.5, "Kreditkonto");
@@ -161,8 +155,7 @@ public class BankLogic {
 
     public ArrayList<Transaction> getTransactions(String pNo, int accountId) {
         ArrayList<Transaction> finalResult = new ArrayList<>();
-        if (!customerExists(pNo))
-            return null;
+        if (!customerExists(pNo)) return null;
         boolean accountBelongsToCustomer = false;
         for (Customer customer : allCustomers) {
             if (Objects.equals(customer.getPersonalNumber(), pNo)) {
@@ -188,8 +181,7 @@ public class BankLogic {
     }
 
     public String getAccount(String pNo, int accountId) {
-        if (!customerExists(pNo))
-            return null;
+        if (!customerExists(pNo)) return null;
         for (Customer allCustomer : allCustomers) {
             if (Objects.equals(allCustomer.getPersonalNumber(), pNo)) {
                 for (CreditAccount creditAccount : allCustomer.getCreditAccounts()) {
@@ -208,8 +200,7 @@ public class BankLogic {
     }
 
     public String checkAccountType(String pNo, int accountId) {
-        if (!customerExists(pNo))
-            return null;
+        if (!customerExists(pNo)) return null;
         for (Customer allCustomer : allCustomers) {
             if (Objects.equals(allCustomer.getPersonalNumber(), pNo)) {
                 for (CreditAccount creditAccount : allCustomer.getCreditAccounts()) {
@@ -228,8 +219,7 @@ public class BankLogic {
     }
 
     public SavingsAccount getSavingAccount(String pNo, int accountId) {
-        if (!customerExists(pNo))
-            return null;
+        if (!customerExists(pNo)) return null;
         for (Customer allCustomer : allCustomers) {
             if (Objects.equals(allCustomer.getPersonalNumber(), pNo)) {
                 for (SavingsAccount savingsAccount : allCustomer.getSavingsAccounts()) {
@@ -243,8 +233,7 @@ public class BankLogic {
     }
 
     public CreditAccount getCreditAccount(String pNo, int accountId) {
-        if (!customerExists(pNo))
-            return null;
+        if (!customerExists(pNo)) return null;
         for (Customer allCustomer : allCustomers) {
             if (Objects.equals(allCustomer.getPersonalNumber(), pNo)) {
                 for (CreditAccount creditAccount : allCustomer.getCreditAccounts()) {
@@ -258,8 +247,7 @@ public class BankLogic {
     }
 
     public boolean deposit(String pNo, int accountId, int amount) {
-        if (!customerExists(pNo))
-            return false;
+        if (!customerExists(pNo)) return false;
         for (Customer allCustomer : allCustomers) {
             if (Objects.equals(allCustomer.getPersonalNumber(), pNo))
                 return allCustomer.depositIntoAccount(accountId, amount);
@@ -268,8 +256,7 @@ public class BankLogic {
     }
 
     public boolean withdraw(String pNo, int accountId, int amount) {
-        if (!customerExists(pNo))
-            return false;
+        if (!customerExists(pNo)) return false;
         for (Customer allCustomer : allCustomers) {
             if (Objects.equals(allCustomer.getPersonalNumber(), pNo)) {
                 return allCustomer.withdrawFromAccount(accountId, amount);
@@ -291,8 +278,7 @@ public class BankLogic {
      * The returned string pattern is as follows: "accountNumber balance accountType earnedInterest"
      */
     public String closeAccount(String pNr, int accountId) {
-        if (!customerExists(pNr))
-            return null;
+        if (!customerExists(pNr)) return null;
 
         for (Customer allCustomer : allCustomers) {
             if (Objects.equals(allCustomer.getPersonalNumber(), pNr)) {
@@ -301,8 +287,7 @@ public class BankLogic {
                         return savingsAccount.deactivateAccount();
                 }
                 for (CreditAccount creditAccount : allCustomer.getCreditAccounts()) {
-                    if (creditAccount.getCustomerAccountNumber() == accountId)
-                        return creditAccount.deactivateAccount();
+                    if (creditAccount.getCustomerAccountNumber() == accountId) return creditAccount.deactivateAccount();
                 }
             }
         }
@@ -318,8 +303,7 @@ public class BankLogic {
      * null is returned.
      */
     public ArrayList<String> deleteCustomer(String pNo) {
-        if (!customerExists(pNo))
-            return null;
+        if (!customerExists(pNo)) return null;
         ArrayList<String> removedCustomer = new ArrayList<String>();
         Customer customer = findCustomerByPersonalNumber(pNo);
 
@@ -344,11 +328,17 @@ public class BankLogic {
         return removedCustomer;
     }
 
+    /**
+     * Export customers to a data-file (.dat extension).
+     * @param filePath: the path and name of the file.
+     * @param frame: the current frame to be used to prompt different dialogs (Error, Success and etc.)
+     * @return: If creating and storing data into file was successful returns true, else false.
+     */
     public boolean exportCustomers(String filePath, JFrame frame) {
         try {
             FileOutputStream fos = new FileOutputStream(filePath);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(allCustomers);
+            oos.writeObject(this.getAllCustomers());
             oos.close();
             fos.close();
             return true;
@@ -360,23 +350,22 @@ public class BankLogic {
     }
 
     public void updateAccountNumber() {
-        // loop through the allCustomers
-        int accountNumber = 1000;
+        int maxAccountNumber = 1000;
         for (Customer customer : allCustomers) {
-            for (SavingsAccount savingsAccount : customer.getSavingsAccounts()) {
-                accountNumber = savingsAccount.getCustomerAccountNumber();
-            }
-            for (CreditAccount creditAccount : customer.getCreditAccounts()) {
-                accountNumber = creditAccount.getCustomerAccountNumber();
+            for (Account account : customer.getAccounts()) { // Assuming there is a method getAccounts() that returns all accounts
+                if (account.getCustomerAccountNumber() > maxAccountNumber) {
+                    maxAccountNumber = account.getCustomerAccountNumber();
+                    System.out.println(maxAccountNumber);
+                }
             }
         }
-        accountNumber++;
-        Account.accountNumber = accountNumber;
+        // accountNumber is the next free account number
+        Account.accountNumber = maxAccountNumber + 1;
     }
 
 
     public Boolean importCustomers(String fileName, JFrame frame) throws IOException, ClassNotFoundException {
-        Path path = Paths.get("src", "habhez0_files", fileName).normalize();
+        Path path = filePath.resolve(fileName);
         String fullPath = path.toString();
         try {
             FileInputStream fis = new FileInputStream(fullPath);
@@ -403,19 +392,36 @@ public class BankLogic {
 
     public boolean writeToTextFile(Integer accountNumber) {
         String fileName = accountNumber + ".txt";
+        Account account = findAccountByNumber(accountNumber);
+
+        if (account != null) {
+            // Assuming you have a method in Customer class to get the full name
+            Customer customer = findCustomerByAccountNumber(accountNumber);
+            String customerName = Objects.requireNonNull(findCustomerByAccountNumber(accountNumber)).getFullName();
+            return account.writeTransactionsInTextFile(fileName, customerName, filePath);
+        }
+
+        return false;
+    }
+
+    private Customer findCustomerByAccountNumber(int accountNumber) {
         for (Customer customer : allCustomers) {
-            for (SavingsAccount savingsAccount : customer.getSavingsAccounts()) {
-                if (savingsAccount.getCustomerAccountNumber() == accountNumber) {
-                    return savingsAccount.writeTransactionsInTextFile(fileName, customer.getFirstName() + " " + customer.getLastName());
-                }
+            if (customer.hasAccount(accountNumber)) { // Assuming hasAccount is a method in Customer that checks if the customer has an account with the given number
+                return customer;
             }
-            for (CreditAccount creditAccount : customer.getCreditAccounts()) {
-                if (creditAccount.getCustomerAccountNumber() == accountNumber) {
-                    return creditAccount.writeTransactionsInTextFile(fileName, customer.getFirstName() + " " + customer.getLastName());
+        }
+        return null;
+    }
+
+    public Account findAccountByNumber(int accountNumber) {
+        for (Customer customer : allCustomers) {
+            for (Account account : customer.getAccounts()) { // Assuming getAccounts() returns a list of all accounts (both Savings and Credit)
+                if (account.getCustomerAccountNumber() == accountNumber) {
+                    return account;
                 }
             }
         }
-        return false;
+        return null;
     }
 
     public void loadTransactions(File file, JFrame frame) {
@@ -441,5 +447,19 @@ public class BankLogic {
             JOptionPane.showMessageDialog(frame, "Filen du försöker importera finns inte.", "Fel", JOptionPane.ERROR_MESSAGE);
             ioe.printStackTrace();
         }
+    }
+
+    public String listAllCustomersWithAccounts() {
+        StringBuilder builder = new StringBuilder();
+
+        for (Customer customer : allCustomers) {
+            builder.append("Customer: ").append(customer.getFirstName()).append(" ").append(customer.getLastName()).append("\n");
+            for (Account account : customer.getAccounts()) {
+                builder.append("  Account Number: ").append(account.getCustomerAccountNumber()).append(", Balance: ").append(account.getBalance()).append("\n");
+            }
+            builder.append("\n");
+        }
+
+        return builder.toString();
     }
 }

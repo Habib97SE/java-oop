@@ -603,7 +603,6 @@ public class GUI {
         String[] accounts = customer.getAccountsNumber().toArray(new String[0]);
         JComboBox<String> accountNumbers = new JComboBox<>(accounts);
         transactionsPane.add(accountNumbers, gbc);
-
         gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = 3;
@@ -764,18 +763,18 @@ public class GUI {
                 return;
             }
 
-            if (amountDouble <= 0) {
+            if (amountDouble <= 0 && account.getAccountType().equals("Sparkonto")) {
                 JOptionPane.showMessageDialog(frame, "Beloppet måste vara större än 0.", "Fel", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             Double maximumWithdraw = account.getBalance();
-            if (amountDouble > maximumWithdraw) {
+            if (amountDouble > maximumWithdraw && account.getAccountType().equals("Sparkonto")) {
                 JOptionPane.showMessageDialog(frame, "Du kan inte ta ut mer än vad du har på kontot.", "Fel", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            boolean result = account.withdraw(amountDouble);
+            boolean result = bankLogic.withdraw(socialSecurityNumber, accountNumber, (int) amountDouble);
             if (result) {
                 Double accountBalance = account.getBalance();
                 String message = "Uttag lyckades.\nKontonummer: " + accountNumberValue + "\nNytt saldo: " + accountBalance;
@@ -941,7 +940,11 @@ public class GUI {
         JTable accountTable = new JTable(model);
         accountTable.setPreferredScrollableViewportSize(new Dimension(500, 70));
         accountTable.setFillsViewportHeight(true);
+        // loop through all account that belong to the customer and show only active ones. (those which aren't deleted).
         for (Account account : customer.getAccounts()) {
+            if (!account.getAccountIsActive()) {
+                continue;
+            }
             String[] accountDetails = {String.valueOf(account.getCustomerAccountNumber()), String.valueOf(account.getBalance()), account.getAccountType(), String.valueOf(account.getInterestRate())};
             model.addRow(accountDetails);
         }
